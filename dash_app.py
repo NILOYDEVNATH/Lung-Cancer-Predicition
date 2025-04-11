@@ -3,18 +3,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
-from flask_caching import Cache
 
 # Initialize the app
 app = Dash(__name__)
-cache = Cache(app.server, config={
-    'CACHE_TYPE': 'SimpleCache',
-    'CACHE_DEFAULT_TIMEOUT': 300  # in seconds
-})
 
 
 # Load the real data
-@cache.memoize()
 def load_real_data():
     # Load the real dataset
     df = pd.read_csv('lung_cancer_prediction.csv')
@@ -23,7 +17,7 @@ def load_real_data():
     smoking_order = ['Non-Smoker', 'Former Smoker', 'Smoker']
     df['Smoking_Status'] = pd.Categorical(df['Smoking_Status'], categories=smoking_order, ordered=True)
 
-    # Convert categorical strings to categorize if needed
+    # Convert categorical strings to categories if needed
     for col in ['Cancer_Type', 'Mutation_Type', 'Socioeconomic_Status', 'Treatment_Access']:
         if df[col].dtype == 'object':
             df[col] = df[col].astype('category')
@@ -49,15 +43,15 @@ df = data['dataframe']
 app.layout = html.Div([
     # Header
     html.Div([
-        # html.H1("Lung Cancer Risk Analysis Dashboard", style={'textAlign': 'center'}),
+        html.H1("Lung Cancer Risk Analysis", style={'textAlign': 'center'}),
 
         # Navigation Tabs
-        dcc.Tabs(id='tabs', value='demographics', children=[
-            # dcc.Tab(label='Demographics', value='demographics'),
-            # dcc.Tab(label='Risk Factors', value='risk_factors'),
-            # dcc.Tab(label='Geographic Analysis', value='geographic'),
-            # dcc.Tab(label='Healthcare Impact', value='healthcare'),
-            # dcc.Tab(label='Survival Analysis', value='survival'),
+        dcc.Tabs(id='tabs', value='geographic', children=[
+            dcc.Tab(label='Geographic Analysis', value='geographic'),
+            dcc.Tab(label='Demographics', value='demographics'),
+            dcc.Tab(label='Risk Factors', value='risk_factors'),
+            dcc.Tab(label='Healthcare Impact', value='healthcare'),
+            dcc.Tab(label='Survival Analysis', value='survival'),
         ]),
     ]),
 
@@ -72,63 +66,13 @@ app.layout = html.Div([
     Input('tabs', 'value')
 )
 def render_content(tab):
-    # if tab == 'demographics':
+    if tab == 'demographics':
         df['AgeGroup'] = pd.cut(df['Age'], bins=10).astype(str)
         df['Mortality_Risk_Bin'] = pd.cut(df['Mortality_Risk'], bins=10).astype(str)
         df['Survival_Bin'] = pd.cut(df['5_Year_Survival_Probability'], bins=10).astype(str)
+
         return html.Div([
             html.Div([
-
-                # World map with circles
-                html.Div([
-                    dcc.Graph(id='geographic-map')
-                ], style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'top'}),
-
-                # Filters
-                html.Div([
-                    html.H3("Filter Controls"),
-
-                    html.Label("Filter by Continent:"),
-                    dcc.Dropdown(
-                        id='continent-filter',
-                        options=[{'label': 'All', 'value': 'all'}] +
-                                [{'label': c, 'value': c} for c in data['continents']],
-                        value='all'
-                    ),
-
-                    html.Label("Filter by Smoking Status:"),
-                    dcc.Dropdown(
-                        id='smoking-filter',
-                        options=[
-                            {'label': 'All', 'value': 'all'},
-                            {'label': 'Non-Smoker', 'value': 'Non-Smoker'},
-                            {'label': 'Former Smoker', 'value': 'Former Smoker'},
-                            {'label': 'Smoker', 'value': 'Smoker'}
-                        ],
-                        value='all'
-                    ),
-
-                    html.Label("Filter by Cancer Type:"),
-                    dcc.Dropdown(
-                        id='cancer-type-filter',
-                        options=[{'label': 'All', 'value': 'all'}] +
-                                [{'label': ct, 'value': ct} for ct in data['cancer_types']],
-                        value='all'
-                    ),
-
-                    html.Label("Minimum Age:"),
-                    dcc.Slider(
-                        id='min-age-slider',
-                        min=int(df['Age'].min()),
-                        max=int(df['Age'].max()),
-                        value=int(df['Age'].min()),
-                        marks={i: str(i) for i in range(int(df['Age'].min()), int(df['Age'].max()) + 1, 10)},
-                        step=5
-                    ),
-
-                    html.Button('Apply Filters', id='apply-filters-button', n_clicks=0),
-                ], style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top', 'padding': '20px'}),
-
                 # Age Distribution
                 html.Div([
                     dcc.Graph(
@@ -199,37 +143,100 @@ def render_content(tab):
                         )
                     )
                 ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
+            ])
+        ])
 
-                # Main Risk Heatmap
-                html.Div([
-                    # Air Pollution
-                    dcc.Graph(
-                        figure=px.box(
-                            df,
-                            x='Air_Pollution_Exposure',
-                            y='Mortality_Risk',
-                            title="Mortality Risk by Air Pollution Level",
-                            color='Air_Pollution_Exposure',
-                            category_orders={"Air_Pollution_Exposure": ['Low', 'Medium', 'High']}
-                        )
-                    ),
-                ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
+    elif tab == 'risk_factors':
+        return html.Div([
 
-                # Risk Factor Bar Charts
-                html.Div([
-                    # Smoking Status
-                    dcc.Graph(
-                        figure=px.box(
-                            df,
-                            x='Smoking_Status',
-                            y='Mortality_Risk',
-                            title="Mortality Risk by Smoking Status",
-                            color='Smoking_Status',
-                            category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']}
-                        )
-                    ),
-                ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
-            ]),
+            # Risk Factor Analysis Section
+            # Main Risk Heatmap
+            html.Div([
+                # Air Pollution
+                dcc.Graph(
+                    figure=px.box(
+                        df,
+                        x='Air_Pollution_Exposure',
+                        y='Mortality_Risk',
+                        title="Mortality Risk by Air Pollution Level",
+                        color='Air_Pollution_Exposure',
+                        category_orders={"Air_Pollution_Exposure": ['Low', 'Medium', 'High']}
+                    )
+                ),
+            ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
+
+            # Risk Factor Bar Charts
+            html.Div([
+                # Smoking Status
+                dcc.Graph(
+                    figure=px.box(
+                        df,
+                        x='Smoking_Status',
+                        y='Mortality_Risk',
+                        title="Mortality Risk by Smoking Status",
+                        color='Smoking_Status',
+                        category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']}
+                    )
+                ),
+            ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
+        ])
+
+    elif tab == 'geographic':
+        return html.Div([
+            # World map with circles
+            html.Div([
+                dcc.Graph(id='geographic-map')
+            ], style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'top'}),
+
+            # Filters
+            html.Div([
+
+                html.Label("Filter by Continent:"),
+                dcc.Dropdown(
+                    id='continent-filter',
+                    options=[{'label': 'All', 'value': 'all'}] +
+                            [{'label': c, 'value': c} for c in data['continents']],
+                    value='all'
+                ),
+
+                html.Label("Filter by Smoking Status:"),
+                dcc.Dropdown(
+                    id='smoking-filter',
+                    options=[
+                        {'label': 'All', 'value': 'all'},
+                        {'label': 'Non-Smoker', 'value': 'Non-Smoker'},
+                        {'label': 'Former Smoker', 'value': 'Former Smoker'},
+                        {'label': 'Smoker', 'value': 'Smoker'}
+                    ],
+                    value='all'
+                ),
+
+                html.Label("Filter by Cancer Type:"),
+                dcc.Dropdown(
+                    id='cancer-type-filter',
+                    options=[{'label': 'All', 'value': 'all'}] +
+                            [{'label': ct, 'value': ct} for ct in data['cancer_types']],
+                    value='all'
+                ),
+
+                html.Label("Minimum Age:"),
+                dcc.Slider(
+                    id='min-age-slider',
+                    min=int(df['Age'].min()),
+                    max=int(df['Age'].max()),
+                    value=int(df['Age'].min()),
+                    marks={i: str(i) for i in range(int(df['Age'].min()), int(df['Age'].max()) + 1, 10)},
+                    step=5
+                ),
+
+                html.Button('Apply Filters', id='apply-filters-button', n_clicks=0),
+            ], style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'top', 'padding': '20px'}),
+
+        ])
+
+    elif tab == 'healthcare':
+        return html.Div([
+
             html.Div([
                 # SES vs. Cancer Stage
                 html.Div([
@@ -275,6 +282,8 @@ def render_content(tab):
                     )
                 ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'})
             ]),
+
+            # Second row - Additional Healthcare Analysis
             html.Div([
                 # Healthcare Access
                 html.Div([
@@ -305,7 +314,12 @@ def render_content(tab):
                         )
                     )
                 ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'})
-            ]),
+            ])
+        ])
+
+    elif tab == 'survival':
+        return html.Div([
+
             html.Div([
                 # Distribution of Mortality Risk
                 html.Div([
@@ -355,6 +369,8 @@ def render_content(tab):
                     )
                 ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'})
             ]),
+
+            # Second row - Additional Survival Analysis
             html.Div([
                 # Cancer Type vs Survival
                 html.Div([
@@ -385,6 +401,7 @@ def render_content(tab):
                 ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'})
             ])
         ])
+
 
 # Callback for risk factors interaction plot
 @app.callback(
