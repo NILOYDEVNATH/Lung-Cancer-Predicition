@@ -113,29 +113,61 @@ def risk_factor_tab_content(df):
     ])
 
 def geographic_tab_content(df):
-    # Group by country and calculate statistics
-    country_stats = df.groupby('Country', observed=True).agg(
-        CaseCount=('Country', 'size'),
-        AvgMortalityRisk=('Mortality_Risk', 'mean'),
-        AvgSurvivalProb=('5_Year_Survival_Probability', 'mean')
-    ).reset_index()
+    country_map = {
+        'USA': 'USA',
+        'UK': 'GBR',
+        'DR Congo': 'COD',
+        'Russia': 'RUS',
+        'Thailand': 'THA',
+        'Colombia': 'COL',
+        'Egypt': 'EGY',
+        'Spain': 'ESP',
+        'Kenya': 'KEN',
+        'Japan': 'JPN',
+        'Bangladesh': 'BGD',
+        'Nigeria': 'NGA',
+        'Pakistan': 'PAK',
+        'Myanmar': 'MMR',
+        'South Africa': 'ZAF',
+        'Indonesia': 'IDN',
+        'Italy': 'ITA',
+        'Germany': 'DEU',
+        'Brazil': 'BRA',
+        'Tanzania': 'TZA',
+        'South Korea': 'KOR',
+        'Turkey': 'TUR',
+        'Vietnam': 'VNM',
+        'Iran': 'IRN',
+        'China': 'CHN',
+        'Mexico': 'MEX',
+        'India': 'IND',
+        'Philippines': 'PHL',
+        'France': 'FRA',
+        'Ethiopia': 'ETH'
+    }
+
+    df['iso_alpha3'] = df['Country'].map(country_map)
+
+    country_stats = df.groupby(['Country', 'iso_alpha3', 'Continent']).agg({
+        'Age': 'mean',
+        'Mortality_Risk': 'mean',
+        '5_Year_Survival_Probability': 'mean',
+        'Country': 'count'
+    }).rename(columns={'Country': 'Count'}).reset_index()
 
     fig = px.scatter_geo(
         country_stats,
-        locations="Country",
-        locationmode="country names",
-        size="CaseCount",
-        color="AvgMortalityRisk",
-        hover_name="Country",
-        hover_data=["CaseCount", "AvgMortalityRisk", "AvgSurvivalProb"],
-        projection="natural earth",
-        title="Global Distribution of Lung Cancer Cases and Mortality Risk",
-        color_continuous_scale="RdYlGn_r",
-        labels={
-            "CaseCount": "Number of Cases",
-            "AvgMortalityRisk": "Avg Mortality Risk",
-            "AvgSurvivalProb": "Avg 5-Year Survival"
-        }
+        locations='iso_alpha3',
+        color='Continent',
+        hover_name='Country',
+        size='Count',  # Size of bubble based on number of cases
+        hover_data=['Age', 'Mortality_Risk', '5_Year_Survival_Probability'],
+        projection='natural earth',
+    )
+
+    fig.update_layout(
+        height=400,
+        margin={"r": 0, "t": 30, "l": 0, "b": 0}
     )
 
     return html.Div([
