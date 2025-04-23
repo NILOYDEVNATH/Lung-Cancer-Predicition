@@ -1,6 +1,16 @@
 from dash import dcc, html
 import plotly.express as px
 
+country_map = {
+            'USA': 'USA', 'UK': 'GBR', 'DR Congo': 'COD', 'Russia': 'RUS', 'Thailand': 'THA',
+            'Colombia': 'COL', 'Egypt': 'EGY', 'Spain': 'ESP', 'Kenya': 'KEN', 'Japan': 'JPN',
+            'Bangladesh': 'BGD', 'Nigeria': 'NGA', 'Pakistan': 'PAK', 'Myanmar': 'MMR',
+            'South Africa': 'ZAF', 'Indonesia': 'IDN', 'Italy': 'ITA', 'Germany': 'DEU',
+            'Brazil': 'BRA', 'Tanzania': 'TZA', 'South Korea': 'KOR', 'Turkey': 'TUR',
+            'Vietnam': 'VNM', 'Iran': 'IRN', 'China': 'CHN', 'Mexico': 'MEX', 'India': 'IND',
+            'Philippines': 'PHL', 'France': 'FRA', 'Ethiopia': 'ETH'
+        }
+
 def demographic_tab_content(df):
     return html.Div([
         html.Div([
@@ -113,38 +123,6 @@ def risk_factor_tab_content(df):
     ])
 
 def geographic_tab_content(df):
-    country_map = {
-        'USA': 'USA',
-        'UK': 'GBR',
-        'DR Congo': 'COD',
-        'Russia': 'RUS',
-        'Thailand': 'THA',
-        'Colombia': 'COL',
-        'Egypt': 'EGY',
-        'Spain': 'ESP',
-        'Kenya': 'KEN',
-        'Japan': 'JPN',
-        'Bangladesh': 'BGD',
-        'Nigeria': 'NGA',
-        'Pakistan': 'PAK',
-        'Myanmar': 'MMR',
-        'South Africa': 'ZAF',
-        'Indonesia': 'IDN',
-        'Italy': 'ITA',
-        'Germany': 'DEU',
-        'Brazil': 'BRA',
-        'Tanzania': 'TZA',
-        'South Korea': 'KOR',
-        'Turkey': 'TUR',
-        'Vietnam': 'VNM',
-        'Iran': 'IRN',
-        'China': 'CHN',
-        'Mexico': 'MEX',
-        'India': 'IND',
-        'Philippines': 'PHL',
-        'France': 'FRA',
-        'Ethiopia': 'ETH'
-    }
 
     df['iso_alpha3'] = df['Country'].map(country_map)
 
@@ -167,11 +145,14 @@ def geographic_tab_content(df):
 
     fig.update_layout(
         height=400,
-        margin={"r": 0, "t": 30, "l": 0, "b": 0}
+        margin={"r": 0, "t": 30, "l": 0, "b": 0},
+        dragmode='select'
     )
 
     return html.Div([
-        dcc.Graph(figure=fig)
+        dcc.Graph(
+            id = 'geographic-tab',
+            figure=fig)
     ])
 
 def healthcare_tab_content(df):
@@ -341,4 +322,50 @@ def survival_tab_content(df):
             ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'})
         ])
     ])
+
+def geographic_choose_menu_content(df):
+        df['iso_alpha3'] = df['Country'].map(country_map)
+
+        # Aggregate data
+        country_stats = df.groupby(['Country', 'iso_alpha3']).agg(
+            Count=('Country', 'count')
+        ).reset_index()
+
+        fig = px.scatter_geo(
+            country_stats,
+            locations='iso_alpha3',
+            hover_name='Country',
+            size='Count',
+            color_discrete_sequence=['#888'],
+        )
+
+        fig.update_traces(
+            hovertemplate="<b>%{hovertext}</b><extra></extra>",
+            marker=dict(sizemode='area', sizeref=100, sizemin=2)
+        )
+
+        fig.update_layout(
+            autosize=True,
+            margin=dict(l=0, r=0, t=0, b=0),
+            showlegend=False,
+            height=None,
+            geo=dict(bgcolor='rgba(0,0,0,0)'),
+            clickmode = 'event+select'
+        )
+
+        return html.Div([
+            dcc.Graph(
+                id='geographic-map',
+                figure=fig,
+                config={
+                    'displayModeBar': False,
+                    'staticPlot': False
+                },
+                style={
+                    'width': '100%',
+                    'aspectRatio': '2',
+                    'overflow': 'hidden'
+                }
+            )
+        ])
 
