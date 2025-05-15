@@ -257,24 +257,24 @@ def survival_tab_content(df):
                         bargap=0.1,
                     )
                 )
-            ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'}),
+            ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
 
             # Distribution of 5-Year Survival
-            html.Div([
-                dcc.Graph(
-                    figure=px.histogram(
-                        df,
-                        x="5_Year_Survival_Probability",
-                        color="Survival_Bin",  # multiple colors based on bins
-                        title="Distribution of 5-Year Survival Probability",
-                        color_discrete_sequence=px.colors.qualitative.Set3
-                    ).update_layout(
-                        xaxis_title="5-Year Survival Probability",
-                        yaxis_title="Number of Patients",
-                        bargap=0.2,
-                    )
-                )
-            ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'}),
+            # html.Div([
+            #     dcc.Graph(
+            #         figure=px.histogram(
+            #             df,
+            #             x="5_Year_Survival_Probability",
+            #             color="Survival_Bin",  # multiple colors based on bins
+            #             title="Distribution of 5-Year Survival Probability",
+            #             color_discrete_sequence=px.colors.qualitative.Set3
+            #         ).update_layout(
+            #             xaxis_title="5-Year Survival Probability",
+            #             yaxis_title="Number of Patients",
+            #             bargap=0.2,
+            #         )
+            #     )
+            # ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'}),
 
             # Family History Impact
             html.Div([
@@ -288,7 +288,7 @@ def survival_tab_content(df):
                         color_discrete_sequence=px.colors.qualitative.Pastel
                     )
                 )
-            ], style={'width': '33%', 'display': 'inline-block', 'vertical-align': 'top'})
+            ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'})
         ]),
 
         # Second row - Additional Survival Analysis

@@ -2,11 +2,11 @@ from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
 
-from tab_content import demographic_tab_content, risk_factor_tab_content, geographic_tab_content, \
-    healthcare_tab_content, survival_tab_content, geographic_choose_menu_content, country_map
+from tab_content import geographic_tab_content, risk_factor_tab_content, survival_tab_content
 
 # Initialize the app
 app = Dash(__name__)
+
 
 # Load the real data
 def load_real_data():
@@ -43,100 +43,134 @@ df['Mortality_Risk_Bin'] = pd.cut(df['Mortality_Risk'], bins=10).astype(str)
 df['Survival_Bin'] = pd.cut(df['5_Year_Survival_Probability'], bins=10).astype(str)
 country_to_continent = df[['Country', 'Continent']].drop_duplicates().set_index('Country')['Continent'].to_dict()
 
+color_theme = {
+    'primary': '#1f77b4',
+    'secondary': '#ff7f0e',
+    'tertiary': '#2ca02c',
+    'quaternary': '#d62728',
+    'background': '#fafafa',
+    'text': '#333333'
+}
+
 # App layout
 app.layout = html.Div([
     # Header
     html.Div([
-        html.H1("Lung Cancer Risk Analysis", style={'textAlign': 'center', 'fontSize': '24px', 'marginBottom': '10px'})
-    ]),
+        html.H1("Lung Cancer Risk Analysis Dashboard",
+                style={
+                    'textAlign': 'center',
+                    'fontSize': '28px',
+                    'marginBottom': '20px',
+                    'color': color_theme['text'],
+                    'fontWeight': 'bold'
+                })
+    ], style={'backgroundColor': 'white', 'padding': '20px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
 
-    # Main Row: Sidebar + Tabs/Content
+    # Main Row: Sidebar + Content
     html.Div([
 
         # --- Sidebar Filters ---
         html.Div([
-            html.H5("Filters", style={'marginBottom': '10px', 'fontSize': '14px'}),
+            html.H4("🔍 Filter Data",
+                    style={'marginBottom': '20px', 'fontSize': '16px', 'color': color_theme['primary']}),
 
             html.Div([
-
                 # Continent
                 html.Div([
-                    html.Label("Continent:", style={'fontSize': '12px'}),
+                    html.Label("🌍 Continent", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                     dcc.RadioItems(
                         id='continent-filter',
-                        options=[{'label': '🌍 All', 'value': 'all'}] + [{'label': c, 'value': c} for c in data['continents']],
+                        options=[{'label': 'All', 'value': 'all'}] + [{'label': c, 'value': c} for c in
+                                                                      data['continents']],
                         value='all',
                         labelStyle={
-                            'display': 'inline-block', 'padding': '4px 6px', 'margin': '2px',
-                            'border': '1px solid #ddd', 'borderRadius': '4px', 'cursor': 'pointer', 'fontSize': '11px'
+                            'display': 'block',
+                            'padding': '5px 10px',
+                            'margin': '3px 0',
+                            'borderRadius': '4px',
+                            'cursor': 'pointer',
+                            'fontSize': '12px',
+                            'transition': 'background-color 0.3s'
                         },
-                        inputStyle={'marginRight': '5px'}
+                        inputStyle={'marginRight': '8px'}
                     )
                 ], style={'marginBottom': '10px'}),
 
                 # Country (map)
-                html.Div([
-                    dcc.Store(id='map-filter', data='all'),
-                    geographic_choose_menu_content(df)
-                ], style={'marginBottom': '10px'}),
+                dcc.Store(id='map-filter', data='all'),
 
                 # Smoking
                 html.Div([
-                    html.Label("Smoking:", style={'fontSize': '12px'}),
+                    html.Label("🚬 Smoking Status",
+                               style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                     dcc.RadioItems(
                         id='smoking-filter',
                         options=[
-                            {'label': '🚭 Non', 'value': 'Non-Smoker'},
+                            {'label': 'All', 'value': 'all'},
+                            {'label': '🚭 Non-Smoker', 'value': 'Non-Smoker'},
                             {'label': '🫁 Former', 'value': 'Former Smoker'},
-                            {'label': '🚬 Smoker', 'value': 'Smoker'},
-                            {'label': 'All', 'value': 'all'}
+                            {'label': '🚬 Smoker', 'value': 'Smoker'}
                         ],
                         value='all',
                         labelStyle={
-                            'display': 'inline-block', 'padding': '4px 6px', 'margin': '2px',
-                            'border': '1px solid #ddd', 'borderRadius': '4px', 'cursor': 'pointer', 'fontSize': '11px'
+                            'display': 'block',
+                            'padding': '5px 10px',
+                            'margin': '3px 0',
+                            'borderRadius': '4px',
+                            'cursor': 'pointer',
+                            'fontSize': '12px'
                         },
-                        inputStyle={'marginRight': '5px'}
+                        inputStyle={'marginRight': '8px'}
                     )
                 ], style={'marginBottom': '10px'}),
 
                 # Cancer Type
                 html.Div([
-                    html.Label("Cancer Type:", style={'fontSize': '12px'}),
+                    html.Label("🔬 Cancer Type",
+                               style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                     dcc.RadioItems(
                         id='cancer-type-filter',
-                        options=[{'label': 'All', 'value': 'all'}] + [{'label': ct, 'value': ct} for ct in data['cancer_types']],
+                        options=[{'label': 'All', 'value': 'all'}] + [{'label': ct, 'value': ct} for ct in
+                                                                      data['cancer_types']],
                         value='all',
                         labelStyle={
-                            'display': 'inline-block', 'padding': '4px 6px', 'margin': '2px',
-                            'border': '1px solid #ddd', 'borderRadius': '4px', 'cursor': 'pointer', 'fontSize': '11px'}
-                        ,
-                        inputStyle={'marginRight': '5px'}
+                            'display': 'block',
+                            'padding': '5px 10px',
+                            'margin': '3px 0',
+                            'borderRadius': '4px',
+                            'cursor': 'pointer',
+                            'fontSize': '12px'
+                        },
+                        inputStyle={'marginRight': '8px'}
                     )
                 ], style={'marginBottom': '10px'}),
 
-                # Sex Filter
+                # Gender Filter
                 html.Div([
-                    html.Label("Sex:", style={'fontSize': '12px'}),
+                    html.Label("👥 Gender", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                     dcc.RadioItems(
                         id='sex-filter',
                         options=[
+                            {'label': 'All', 'value': 'all'},
                             {'label': '👩 Female', 'value': 'Female'},
-                            {'label': '👨 Male', 'value': 'Male'},
-                            {'label': 'All', 'value': 'all'}
+                            {'label': '👨 Male', 'value': 'Male'}
                         ],
                         value='all',
                         labelStyle={
-                            'display': 'inline-block', 'padding': '4px 6px', 'margin': '2px',
-                            'border': '1px solid #ddd', 'borderRadius': '4px', 'cursor': 'pointer', 'fontSize': '11px'
+                            'display': 'block',
+                            'padding': '5px 10px',
+                            'margin': '3px 0',
+                            'borderRadius': '4px',
+                            'cursor': 'pointer',
+                            'fontSize': '12px'
                         },
-                        inputStyle={'marginRight': '5px'}
+                        inputStyle={'marginRight': '8px'}
                     )
                 ], style={'marginBottom': '10px'}),
 
                 # Age Range
                 html.Div([
-                    html.Label("Age Range:", style={'fontSize': '12px'}),
+                    html.Label("📊 Age Range", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '10px'}),
                     dcc.RangeSlider(
                         id='age-range-slider',
                         min=int(df['Age'].min()),
@@ -146,59 +180,66 @@ app.layout = html.Div([
                         step=1,
                         tooltip={"placement": "bottom", "always_visible": False}
                     )
-                ])
-            ])
+                ], style={'marginBottom': '20px'})
+            ],style={
+                'padding': '20px',
+                'backgroundColor': 'white',
+                'borderRadius': '8px',
+                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
+            })
         ], style={
-            'width': '250px',
-            'padding': '15px',
-            'border': '1px solid #eee',
-            'borderRadius': '6px',
-            'backgroundColor': '#f8f8f8',
-            'marginRight': '15px',
+            'width': '280px',
+            'marginRight': '20px',
             'flexShrink': 0
         }),
 
-        # --- Main Content Area ---
+        # --- Main Content Area (All sections in one page) ---
         html.Div([
-            dcc.Tabs(id='tabs', value='geographic', children=[
-                dcc.Tab(label='Geographic', value='geographic'),
-                dcc.Tab(label='Demographics', value='demographics'),
-                dcc.Tab(label='Risk Factors', value='risk_factors'),
-                dcc.Tab(label='Healthcare', value='healthcare'),
-                dcc.Tab(label='Survival', value='survival'),
-            ], style={'fontSize': '12px'}),
-
-            html.Div(id='tabs-content', style={'marginTop': '10px'})
+            html.Div(id='dashboard-content')
         ], style={'flex': 1})
-    ], style={'display': 'flex', 'alignItems': 'flex-start'})
+    ], style={
+        'display': 'flex',
+        'padding': '20px',
+        'backgroundColor': color_theme['background']
+    })
 ])
 
-# Callback to render the selected tab content
+
+# Callback to render all content
 @app.callback(
-    Output('tabs-content', 'children'),
-    [Input('tabs', 'value'),
-     Input('continent-filter', 'value'),
+    Output('dashboard-content', 'children'),
+    [Input('continent-filter', 'value'),
      Input('map-filter', 'data'),
      Input('smoking-filter', 'value'),
      Input('cancer-type-filter', 'value'),
+     Input('sex-filter', 'value'),
      Input('age-range-slider', 'value')]
 )
-def render_tab(tab, continent, country, smoking, cancer_type, age_range):
+def render_dashboard(continent, country, smoking, cancer_type, sex, age_range):
+    filtered_df = filter_data(df, continent, country, smoking, cancer_type, sex, age_range)
 
-    filtered_df = filter_data(df, continent, country, smoking, cancer_type, age_range)
-    if tab == 'demographics':
-        return demographic_tab_content(filtered_df)
-    elif tab == 'risk_factors':
-        return risk_factor_tab_content(filtered_df)
-    elif tab == 'geographic':
-        return geographic_tab_content(filtered_df)
-    elif tab == 'healthcare':
-        return healthcare_tab_content(filtered_df)
-    elif tab == 'survival':
-        return survival_tab_content(filtered_df)
+    return html.Div([
+        # Geographic Section
+        html.Div([
+            html.H3("Geographic Distribution", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            geographic_tab_content(filtered_df)
+        ], style={'marginBottom': '30px'}),
+
+        # Risk Factors Section
+        html.Div([
+            html.H3("Risk Factors Analysis", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            risk_factor_tab_content(filtered_df)
+        ], style={'marginBottom': '30px'}),
+
+        # Survival Section
+        html.Div([
+            html.H3("Survival Analysis", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            survival_tab_content(filtered_df)
+        ])
+    ])
 
 
-def filter_data(df, continent, country, smoking, cancer_type, age_range):
+def filter_data(df, continent, country, smoking, cancer_type, sex, age_range):
     min_age, max_age = age_range
     filtered_df = df.copy()
 
@@ -210,6 +251,8 @@ def filter_data(df, continent, country, smoking, cancer_type, age_range):
         filtered_df = filtered_df[filtered_df['Smoking_Status'] == smoking]
     if cancer_type != 'all':
         filtered_df = filtered_df[filtered_df['Cancer_Type'] == cancer_type]
+    if sex != 'all':
+        filtered_df = filtered_df[filtered_df['Gender'] == sex]
 
     filtered_df = filtered_df[
         (filtered_df['Age'] >= min_age) & (filtered_df['Age'] <= max_age)
@@ -236,9 +279,10 @@ def update_continent_options(selected_country):
 
     return options, value
 
+
 @app.callback(
     Output('map-filter', 'data'),
-    Input('geographic-map', 'selectedData')
+    Input('geographic-tab', 'selectedData')
 )
 def update_country_filter(selected_data):
     if selected_data and 'points' in selected_data:
@@ -246,6 +290,7 @@ def update_country_filter(selected_data):
         print(f"Selected countries: {selected_countries}")
         return ', '.join(selected_countries)
     return 'all'
+
 
 # Run the app
 if __name__ == '__main__':
