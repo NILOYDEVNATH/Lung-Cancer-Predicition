@@ -1,9 +1,7 @@
-from dash import Dash, dcc, html, Input, Output
+from dash import Dash, dcc, html, Input, Output, State, callback_context
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-
-from tab_content import risk_factor_tab_content, survival_tab_content
 
 # Initialize the app
 app = Dash(__name__)
@@ -44,18 +42,6 @@ df['Mortality_Risk_Bin'] = pd.cut(df['Mortality_Risk'], bins=10).astype(str)
 df['Survival_Bin'] = pd.cut(df['5_Year_Survival_Probability'], bins=10).astype(str)
 country_to_continent = df[['Country', 'Continent']].drop_duplicates().set_index('Country')['Continent'].to_dict()
 
-# Country mapping for ISO codes
-country_map = {
-    'USA': 'USA', 'UK': 'GBR', 'DR Congo': 'COD', 'Russia': 'RUS', 'Thailand': 'THA',
-    'Colombia': 'COL', 'Egypt': 'EGY', 'Spain': 'ESP', 'Kenya': 'KEN', 'Japan': 'JPN',
-    'Bangladesh': 'BGD', 'Nigeria': 'NGA', 'Pakistan': 'PAK', 'Myanmar': 'MMR',
-    'South Africa': 'ZAF', 'Indonesia': 'IDN', 'Italy': 'ITA', 'Germany': 'DEU',
-    'Brazil': 'BRA', 'Tanzania': 'TZA', 'South Korea': 'KOR', 'Turkey': 'TUR',
-    'Vietnam': 'VNM', 'Iran': 'IRN', 'China': 'CHN', 'Mexico': 'MEX', 'India': 'IND',
-    'Philippines': 'PHL', 'France': 'FRA', 'Ethiopia': 'ETH'
-}
-
-# Define a color scheme
 color_theme = {
     'primary': '#1f77b4',
     'secondary': '#ff7f0e',
@@ -67,7 +53,7 @@ color_theme = {
 
 # App layout
 app.layout = html.Div([
-    # Header with improved styling
+    # Header
     html.Div([
         html.H1("Lung Cancer Risk Analysis Dashboard",
                 style={
@@ -79,15 +65,15 @@ app.layout = html.Div([
                 })
     ], style={'backgroundColor': 'white', 'padding': '20px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
 
-    # Main Content
+    # Main Row: Sidebar + Content
     html.Div([
-        # Left Panel: Filters with improved styling
+        # --- Sidebar Filters ---
         html.Div([
-            html.Div([
-                html.H4("🔍 Filter Data",
-                        style={'marginBottom': '20px', 'fontSize': '16px', 'color': color_theme['primary']}),
+            html.H4("🔍 Filter Data",
+                    style={'marginBottom': '20px', 'fontSize': '16px', 'color': color_theme['primary']}),
 
-                # Continent Filter
+            html.Div([
+                # Continent
                 html.Div([
                     html.Label("🌍 Continent", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
                     dcc.RadioItems(
@@ -106,12 +92,12 @@ app.layout = html.Div([
                         },
                         inputStyle={'marginRight': '8px'}
                     )
-                ], style={'marginBottom': '20px'}),
+                ], style={'marginBottom': '10px'}),
 
-                # Country Filter Store
+                # Country (map)
                 dcc.Store(id='map-filter', data='all'),
 
-                # Smoking Status Filter
+                # Smoking
                 html.Div([
                     html.Label("🚬 Smoking Status",
                                style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
@@ -134,9 +120,9 @@ app.layout = html.Div([
                         },
                         inputStyle={'marginRight': '8px'}
                     )
-                ], style={'marginBottom': '20px'}),
+                ], style={'marginBottom': '10px'}),
 
-                # Cancer Type Filter
+                # Cancer Type
                 html.Div([
                     html.Label("🔬 Cancer Type",
                                style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
@@ -155,7 +141,7 @@ app.layout = html.Div([
                         },
                         inputStyle={'marginRight': '8px'}
                     )
-                ], style={'marginBottom': '20px'}),
+                ], style={'marginBottom': '10px'}),
 
                 # Gender Filter
                 html.Div([
@@ -178,9 +164,9 @@ app.layout = html.Div([
                         },
                         inputStyle={'marginRight': '8px'}
                     )
-                ], style={'marginBottom': '20px'}),
+                ], style={'marginBottom': '10px'}),
 
-                # Age Range Slider
+                # Age Range
                 html.Div([
                     html.Label("📊 Age Range", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '10px'}),
                     dcc.RangeSlider(
@@ -198,14 +184,83 @@ app.layout = html.Div([
                 'backgroundColor': 'white',
                 'borderRadius': '8px',
                 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
-            })
+            }),
+
+            # Personal Risk Calculator
+            html.Div([
+                html.H4("Personal Risk Assessment",
+                        style={'marginTop': '20px', 'marginBottom': '15px', 'fontSize': '16px',
+                               'color': color_theme['primary']}),
+
+                html.Div([
+                    # Age input
+                    html.Div([
+                        html.Label("Age:", style={'fontWeight': 'bold', 'fontSize': '14px'}),
+                        dcc.Input(id='risk-age-input', type='number', min=1, max=100, value=50,
+                                  style={'width': '100%', 'marginTop': '5px', 'padding': '5px'})
+                    ], style={'marginBottom': '10px'}),
+
+                    # Smoking status
+                    html.Div([
+                        html.Label("Smoking Status:", style={'fontWeight': 'bold', 'fontSize': '14px'}),
+                        dcc.Dropdown(
+                            id='risk-smoking-input',
+                            options=[
+                                {'label': 'Non-Smoker', 'value': 'Non-Smoker'},
+                                {'label': 'Former Smoker', 'value': 'Former Smoker'},
+                                {'label': 'Current Smoker', 'value': 'Smoker'}
+                            ],
+                            value='Non-Smoker',
+                            style={'marginTop': '5px'}
+                        )
+                    ], style={'marginBottom': '10px'}),
+
+                    # Air pollution exposure
+                    html.Div([
+                        html.Label("Air Pollution Exposure:", style={'fontWeight': 'bold', 'fontSize': '14px'}),
+                        dcc.RadioItems(
+                            id='risk-pollution-input',
+                            options=[
+                                {'label': 'Low', 'value': 'Low'},
+                                {'label': 'Medium', 'value': 'Medium'},
+                                {'label': 'High', 'value': 'High'}
+                            ],
+                            value='Low',
+                            labelStyle={'marginRight': '10px', 'display': 'inline-block'}
+                        )
+                    ], style={'marginBottom': '10px'}),
+
+                    # Family history
+                    html.Div([
+                        html.Label("Family History:", style={'fontWeight': 'bold', 'fontSize': '14px'}),
+                        dcc.RadioItems(
+                            id='risk-family-input',
+                            options=[
+                                {'label': 'No', 'value': 'No'},
+                                {'label': 'Yes', 'value': 'Yes'}
+                            ],
+                            value='No',
+                            labelStyle={'marginRight': '10px', 'display': 'inline-block'}
+                        )
+                    ], style={'marginBottom': '15px'}),
+
+                    html.Button("Calculate My Risk", id='calculate-risk-btn',
+                                style={'backgroundColor': color_theme['secondary'], 'color': 'white',
+                                       'border': 'none', 'padding': '8px 15px', 'borderRadius': '4px',
+                                       'cursor': 'pointer', 'width': '100%'})
+                ], style={'padding': '15px', 'backgroundColor': '#f8f9fa', 'borderRadius': '5px'}),
+
+                # Result display area
+                html.Div(id='risk-result', style={'marginTop': '10px'})
+            ], style={'marginTop': '20px', 'backgroundColor': 'white', 'padding': '15px', 'borderRadius': '8px',
+                      'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'})
         ], style={
             'width': '280px',
             'marginRight': '20px',
             'flexShrink': 0
         }),
 
-        # Right Panel: Main Content
+        # --- Main Content Area (All sections in one page) ---
         html.Div([
             html.Div(id='dashboard-content')
         ], style={'flex': 1})
@@ -217,297 +272,7 @@ app.layout = html.Div([
 ])
 
 
-# Improved geographic visualization
-def create_geographic_content(df):
-    df['iso_alpha3'] = df['Country'].map(country_map)
-
-    # Aggregate data with more metrics
-    country_stats = df.groupby(['Country', 'iso_alpha3', 'Continent']).agg({
-        'Age': 'mean',
-        'Mortality_Risk': 'mean',
-        '5_Year_Survival_Probability': 'mean',
-        'Country': 'count'
-    }).rename(columns={'Country': 'Count'}).reset_index()
-
-    # Create enhanced map
-    fig = px.scatter_geo(
-        country_stats,
-        locations='iso_alpha3',
-        color='Continent',
-        hover_name='Country',
-        size='Count',
-        hover_data={
-            'Age': ':.1f',
-            'Mortality_Risk': ':.3f',
-            '5_Year_Survival_Probability': ':.3f',
-            'Count': True
-        },
-        projection='natural earth',
-        title='Global Distribution of Lung Cancer Cases',
-        labels={
-            'Age': 'Avg Age',
-            'Mortality_Risk': 'Avg Mortality Risk',
-            '5_Year_Survival_Probability': 'Avg 5-Year Survival',
-            'Count': 'Number of Cases'
-        }
-    )
-
-    fig.update_layout(
-        height=500,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0},
-        dragmode='select',
-        font={'size': 12},
-        title_font={'size': 20},
-        geo=dict(
-            showframe=False,
-            showcoastlines=True,
-            projection_type='natural earth'
-        )
-    )
-
-    # Add summary statistics
-    total_cases = df.shape[0]
-    countries_count = df['Country'].nunique()
-    avg_survival = df['5_Year_Survival_Probability'].mean()
-
-    summary_cards = html.Div([
-        html.Div([
-            html.H3(f"{total_cases:,}", style={'margin': '0', 'color': color_theme['primary']}),
-            html.P("Total Cases", style={'margin': '0', 'fontSize': '12px'})
-        ], style={'textAlign': 'center', 'padding': '15px', 'backgroundColor': 'white', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
-        html.Div([
-            html.H3(f"{countries_count}", style={'margin': '0', 'color': color_theme['secondary']}),
-            html.P("Countries", style={'margin': '0', 'fontSize': '12px'})
-        ], style={'textAlign': 'center', 'padding': '15px', 'backgroundColor': 'white', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
-        html.Div([
-            html.H3(f"{avg_survival:.1%}", style={'margin': '0', 'color': color_theme['tertiary']}),
-            html.P("Avg 5-Year Survival", style={'margin': '0', 'fontSize': '12px'})
-        ], style={'textAlign': 'center', 'padding': '15px', 'backgroundColor': 'white', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'})
-    ], style={'display': 'grid', 'gridTemplateColumns': 'repeat(3, 1fr)', 'gap': '15px', 'marginBottom': '20px'})
-
-    return html.Div([
-        summary_cards,
-        dcc.Graph(
-            id='geographic-tab',
-            figure=fig,
-            config={'displayModeBar': True, 'displaylogo': False}
-        )
-    ])
-
-
-# Improved risk factors visualization
-def create_risk_factors_content(df):
-    # Create a more comprehensive risk analysis
-    risk_plots = html.Div([
-        # Air Pollution vs Mortality Risk
-        html.Div([
-            dcc.Graph(
-                figure=px.violin(
-                    df,
-                    x='Air_Pollution_Exposure',
-                    y='Mortality_Risk',
-                    color='Air_Pollution_Exposure',
-                    box=True,
-                    points="outliers",
-                    title="Mortality Risk by Air Pollution Level",
-                    category_orders={"Air_Pollution_Exposure": ['Low', 'Medium', 'High']},
-                    color_discrete_sequence=px.colors.sequential.Oranges
-                ).update_layout(
-                    showlegend=False,
-                    height=400,
-                    title_font={'size': 16}
-                )
-            )
-        ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'}),
-
-        # Smoking Status vs Mortality Risk
-        html.Div([
-            dcc.Graph(
-                figure=px.violin(
-                    df,
-                    x='Smoking_Status',
-                    y='Mortality_Risk',
-                    color='Smoking_Status',
-                    box=True,
-                    points="outliers",
-                    title="Mortality Risk by Smoking Status",
-                    category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
-                    color_discrete_sequence=px.colors.sequential.Reds
-                ).update_layout(
-                    showlegend=False,
-                    height=400,
-                    title_font={'size': 16}
-                )
-            )
-        ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'}),
-
-        # Combined Risk Heatmap
-        html.Div([
-            dcc.Graph(
-                figure=create_risk_heatmap(df),
-                config={'displayModeBar': True, 'displaylogo': False}
-            )
-        ], style={'width': '100%', 'padding': '10px'})
-    ])
-
-    return risk_plots
-
-
-def create_risk_heatmap(df):
-    # Create a correlation matrix of risk factors
-    risk_factors = ['Air_Pollution_Exposure', 'Smoking_Status', 'Family_History', 'Mortality_Risk']
-
-    # Convert categorical to numeric for correlation
-    df_numeric = df.copy()
-    df_numeric['Air_Pollution_Exposure'] = df_numeric['Air_Pollution_Exposure'].map({'Low': 1, 'Medium': 2, 'High': 3})
-    df_numeric['Smoking_Status'] = df_numeric['Smoking_Status'].map({'Non-Smoker': 1, 'Former Smoker': 2, 'Smoker': 3})
-    df_numeric['Family_History'] = df_numeric['Family_History'].map({'No': 0, 'Yes': 1})
-
-    # Create pivot table
-    pivot_data = df.groupby(['Air_Pollution_Exposure', 'Smoking_Status'])['Mortality_Risk'].mean().reset_index()
-    pivot_table = pivot_data.pivot(index='Air_Pollution_Exposure', columns='Smoking_Status', values='Mortality_Risk')
-
-    fig = px.imshow(
-        pivot_table,
-        labels=dict(x="Smoking Status", y="Air Pollution Exposure", color="Avg Mortality Risk"),
-        x=['Non-Smoker', 'Former Smoker', 'Smoker'],
-        y=['Low', 'Medium', 'High'],
-        color_continuous_scale='YlOrRd',
-        title="Risk Factor Interaction: Smoking × Air Pollution"
-    )
-
-    fig.update_layout(
-        height=400,
-        title_font={'size': 16}
-    )
-
-    return fig
-
-
-# Improved survival analysis
-def create_survival_content(df):
-    survival_plots = html.Div([
-        # Distribution plots
-        html.Div([
-            html.Div([
-                dcc.Graph(
-                    figure=px.histogram(
-                        df,
-                        x='Mortality_Risk',
-                        nbins=30,
-                        title="Mortality Risk Distribution",
-                        color_discrete_sequence=[color_theme['quaternary']]
-                    ).update_layout(
-                        showlegend=False,
-                        height=350,
-                        title_font={'size': 16},
-                        xaxis_title="Mortality Risk",
-                        yaxis_title="Number of Patients",
-                        bargap=0.1
-                    )
-                )
-            ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'}),
-
-            html.Div([
-                dcc.Graph(
-                    figure=px.histogram(
-                        df,
-                        x='5_Year_Survival_Probability',
-                        nbins=30,
-                        title="5-Year Survival Probability Distribution",
-                        color_discrete_sequence=[color_theme['tertiary']]
-                    ).update_layout(
-                        showlegend=False,
-                        height=350,
-                        title_font={'size': 16},
-                        xaxis_title="5-Year Survival Probability",
-                        yaxis_title="Number of Patients",
-                        bargap=0.1
-                    )
-                )
-            ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'})
-        ]),
-
-        # Family History Impact
-        html.Div([
-            html.Div([
-                dcc.Graph(
-                    figure=px.box(
-                        df,
-                        x="Family_History",
-                        y="5_Year_Survival_Probability",
-                        color="Family_History",
-                        title="Impact of Family History on Survival",
-                        notched=True,
-                        color_discrete_sequence=[color_theme['secondary'], color_theme['primary']]
-                    ).update_layout(
-                        showlegend=False,
-                        height=350,
-                        title_font={'size': 16}
-                    )
-                )
-            ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'}),
-
-            # Survival by Cancer Type
-            html.Div([
-                dcc.Graph(
-                    figure=px.strip(
-                        df,
-                        x="Cancer_Type",
-                        y="5_Year_Survival_Probability",
-                        color="Cancer_Type",
-                        title="Survival Probability by Cancer Type",
-                        color_discrete_sequence=px.colors.qualitative.Set2
-                    ).update_layout(
-                        showlegend=False,
-                        height=350,
-                        title_font={'size': 16}
-                    )
-                )
-            ], style={'width': '50%', 'display': 'inline-block', 'padding': '10px'})
-        ]),
-
-        # Mutation Impact
-        html.Div([
-            dcc.Graph(
-                figure=create_mutation_survival_plot(df),
-                config={'displayModeBar': True, 'displaylogo': False}
-            )
-        ], style={'width': '100%', 'padding': '10px'})
-    ])
-
-    return survival_plots
-
-
-def create_mutation_survival_plot(df):
-    # Create enhanced mutation survival plot
-    df_mutation = df[df['Mutation_Type'].notna()]
-
-    fig = px.box(
-        df_mutation,
-        x="Mutation_Type",
-        y="5_Year_Survival_Probability",
-        color="Mutation_Type",
-        title="Survival Probability by Mutation Type",
-        notched=True,
-        color_discrete_sequence=px.colors.qualitative.Safe
-    )
-
-    fig.update_layout(
-        showlegend=False,
-        height=400,
-        title_font={'size': 16},
-        xaxis_title="Mutation Type",
-        yaxis_title="5-Year Survival Probability"
-    )
-
-    return fig
-
-
-# Main callback
+# Callback to render all content
 @app.callback(
     Output('dashboard-content', 'children'),
     [Input('continent-filter', 'value'),
@@ -520,30 +285,140 @@ def create_mutation_survival_plot(df):
 def render_dashboard(continent, country, smoking, cancer_type, sex, age_range):
     filtered_df = filter_data(df, continent, country, smoking, cancer_type, sex, age_range)
 
+    # Data summary statistics
+    total_patients = len(filtered_df)
+    avg_age = filtered_df['Age'].mean()
+    avg_mortality = filtered_df['Mortality_Risk'].mean()
+    avg_survival = filtered_df['5_Year_Survival_Probability'].mean()
+
+    # Most common cancer type
+    if not filtered_df.empty:
+        most_common_cancer = filtered_df['Cancer_Type'].mode()[0]
+    else:
+        most_common_cancer = "No data"
+
     return html.Div([
+        # Summary statistics
+        html.Div([
+            html.H3("Data Summary", style={'fontSize': '18px', 'marginBottom': '15px'}),
+            html.Div([
+                html.Div([
+                    html.Div([
+                        html.H4(f"{total_patients:,}",
+                                style={'margin': '0', 'textAlign': 'center', 'fontSize': '24px'}),
+                        html.P("Total Patients", style={'margin': '5px 0 0 0', 'textAlign': 'center'})
+                    ], style={'flex': '1', 'padding': '10px', 'backgroundColor': color_theme['primary'],
+                              'color': 'white', 'borderRadius': '5px', 'margin': '0 5px'}),
+                    html.Div([
+                        html.H4(f"{avg_age:.1f}", style={'margin': '0', 'textAlign': 'center', 'fontSize': '24px'}),
+                        html.P("Average Age", style={'margin': '5px 0 0 0', 'textAlign': 'center'})
+                    ], style={'flex': '1', 'padding': '10px', 'backgroundColor': color_theme['secondary'],
+                              'color': 'white', 'borderRadius': '5px', 'margin': '0 5px'}),
+                    html.Div([
+                        html.H4(f"{avg_survival:.1%}",
+                                style={'margin': '0', 'textAlign': 'center', 'fontSize': '24px'}),
+                        html.P("5-Year Survival", style={'margin': '5px 0 0 0', 'textAlign': 'center'})
+                    ], style={'flex': '1', 'padding': '10px', 'backgroundColor': color_theme['tertiary'],
+                              'color': 'white', 'borderRadius': '5px', 'margin': '0 5px'})
+                ], style={'display': 'flex', 'marginBottom': '10px'}),
+                html.Div([
+                    html.P(f"Most common cancer type: {most_common_cancer}", style={'margin': '5px 0'})
+                ])
+            ], style={'padding': '15px', 'backgroundColor': '#f8f9fa', 'borderRadius': '5px'})
+        ], style={'marginBottom': '30px'}),
+
         # Geographic Section
         html.Div([
-            html.H2("Geographic Distribution",
-                    style={'fontSize': '22px', 'marginBottom': '15px', 'color': color_theme['text']}),
-            create_geographic_content(filtered_df)
-        ], style={'marginBottom': '30px', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
+            html.H3("Geographic Distribution", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            html.Div([
+                dcc.Graph(
+                    figure=px.choropleth(
+                        filtered_df.groupby('Country')['Mortality_Risk'].mean().reset_index(),
+                        locations="Country",
+                        locationmode="country names",
+                        color="Mortality_Risk",
+                        color_continuous_scale="Reds",
+                        title="Average Mortality Risk by Country",
+                        labels={"Mortality_Risk": "Mortality Risk"}
+                    )
+                )
+            ])
+        ], style={'marginBottom': '30px'}),
 
         # Risk Factors Section
         html.Div([
-            html.H2("Risk Factors Analysis",
-                    style={'fontSize': '22px', 'marginBottom': '15px', 'color': color_theme['text']}),
-            create_risk_factors_content(filtered_df)
-        ], style={'marginBottom': '30px', 'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}),
+            html.H3("Risk Factors Analysis", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            html.Div([
+                # Heat map of risk factors
+                dcc.Graph(
+                    figure=px.density_heatmap(
+                        filtered_df,
+                        x="Smoking_Status",
+                        y="Air_Pollution_Exposure",
+                        z="Mortality_Risk",
+                        color_continuous_scale="Reds",
+                        title="Mortality Risk by Smoking and Air Pollution"
+                    )
+                )
+            ], style={'marginBottom': '20px'}),
 
-        # Survival Section
+            html.Div([
+                # Bar chart of smoking status vs mortality
+                dcc.Graph(
+                    figure=px.bar(
+                        filtered_df.groupby(['Smoking_Status'])['Mortality_Risk'].mean().reset_index(),
+                        x='Smoking_Status',
+                        y='Mortality_Risk',
+                        color='Smoking_Status',
+                        title="Average Mortality Risk by Smoking Status"
+                    ).update_layout(xaxis_title="Smoking Status", yaxis_title="Mortality Risk")
+                )
+            ])
+        ], style={'marginBottom': '30px'}),
+
+        # Survival Analysis
         html.Div([
-            html.H2("Survival Analysis",
-                    style={'fontSize': '22px', 'marginBottom': '15px', 'color': color_theme['text']}),
-            create_survival_content(filtered_df)
-        ], style={'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '8px',
-                  'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'})
+            html.H3("Survival Analysis", style={'fontSize': '18px', 'marginBottom': '10px'}),
+            html.Div([
+                # Survival by stage
+                dcc.Graph(
+                    figure=px.line(
+                        filtered_df.groupby('Stage_at_Diagnosis')['5_Year_Survival_Probability'].mean().reset_index(),
+                        x='Stage_at_Diagnosis',
+                        y='5_Year_Survival_Probability',
+                        markers=True,
+                        title="5-Year Survival Probability by Cancer Stage",
+                        labels={
+                            "Stage_at_Diagnosis": "Stage at Diagnosis",
+                            "5_Year_Survival_Probability": "5-Year Survival Probability"
+                        }
+                    ).update_layout(
+                        xaxis={'categoryorder': 'array',
+                               'categoryarray': ['Stage I', 'Stage II', 'Stage III', 'Stage IV']}
+                    )
+                )
+            ], style={'marginBottom': '20px'}),
+
+            html.Div([
+                # Treatment vs survival
+                dcc.Graph(
+                    figure=px.bar(
+                        filtered_df.groupby(['Treatment_Access', 'Stage_at_Diagnosis'])[
+                            '5_Year_Survival_Probability'].mean().reset_index(),
+                        x='Stage_at_Diagnosis',
+                        y='5_Year_Survival_Probability',
+                        color='Treatment_Access',
+                        barmode='group',
+                        title="Survival Probability by Stage and Treatment Access"
+                    ).update_layout(
+                        xaxis_title="Cancer Stage",
+                        yaxis_title="5-Year Survival Probability",
+                        xaxis={'categoryorder': 'array',
+                               'categoryarray': ['Stage I', 'Stage II', 'Stage III', 'Stage IV']}
+                    )
+                )
+            ])
+        ])
     ])
 
 
@@ -569,20 +444,21 @@ def filter_data(df, continent, country, smoking, cancer_type, sex, age_range):
     return filtered_df
 
 
-# Keep existing callbacks for continent/country filtering
 @app.callback(
     Output('continent-filter', 'options'),
     Output('continent-filter', 'value'),
     Input('map-filter', 'data')
 )
 def update_continent_options(selected_country):
+    # If 'All' is selected in country, show all continents options
     if selected_country == 'all':
         options = [{'label': 'All', 'value': 'all'}] + [{'label': c, 'value': c} for c in data['continents']]
-        value = 'all'
+        value = 'all'  # Reset continent selection
     else:
+        # Get the continent(s) for the selected country
         continent = country_to_continent.get(selected_country, 'all')
         options = [{'label': continent, 'value': continent}]
-        value = continent
+        value = continent  # Set the continent to the selected one
 
     return options, value
 
@@ -594,8 +470,118 @@ def update_continent_options(selected_country):
 def update_country_filter(selected_data):
     if selected_data and 'points' in selected_data:
         selected_countries = [point['hovertext'] for point in selected_data['points']]
+        print(f"Selected countries: {selected_countries}")
         return ', '.join(selected_countries)
     return 'all'
+
+
+# Callback for the risk calculator
+@app.callback(
+    Output('risk-result', 'children'),
+    Input('calculate-risk-btn', 'n_clicks'),
+    [State('risk-age-input', 'value'),
+     State('risk-smoking-input', 'value'),
+     State('risk-pollution-input', 'value'),
+     State('risk-family-input', 'value')]
+)
+def calculate_risk(n_clicks, age, smoking, pollution, family):
+    if n_clicks is None:
+        return html.Div()
+
+    # Calculate risk score based on factors
+    risk_score = 0
+
+    # Age factor
+    if age <= 40:
+        risk_score += 1
+    elif age <= 60:
+        risk_score += 2
+    else:
+        risk_score += 3
+
+    # Smoking factor
+    if smoking == 'Non-Smoker':
+        risk_score += 1
+    elif smoking == 'Former Smoker':
+        risk_score += 2
+    else:  # Current smoker
+        risk_score += 4
+
+    # Pollution factor
+    if pollution == 'Low':
+        risk_score += 1
+    elif pollution == 'Medium':
+        risk_score += 2
+    else:  # High
+        risk_score += 3
+
+    # Family history
+    if family == 'Yes':
+        risk_score += 2
+
+    # Normalize to 0-10 scale
+    max_score = 12
+    normalized_score = (risk_score / max_score) * 10
+
+    # Determine risk level and advice
+    if normalized_score < 3:
+        risk_level = "Low"
+        color = "green"
+        advice = "Your risk is relatively low. Continue healthy habits and get regular check-ups."
+    elif normalized_score < 6:
+        risk_level = "Moderate"
+        color = "orange"
+        advice = "Your risk is moderate. Consider regular lung screenings and focus on reducing your exposure to risk factors."
+    else:
+        risk_level = "High"
+        color = "red"
+        advice = "Your risk is high. Consult with a healthcare provider about regular lung cancer screenings and ways to reduce your risk."
+
+    # Create gauge chart for risk visualization
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=normalized_score,
+        domain={'x': [0, 1], 'y': [0, 1]},
+        title={'text': "Risk Score", 'font': {'size': 24}},
+        gauge={
+            'axis': {'range': [0, 10], 'tickwidth': 1, 'tickcolor': "black"},
+            'bar': {'color': color},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "gray",
+            'steps': [
+                {'range': [0, 3], 'color': 'green'},
+                {'range': [3, 6], 'color': 'yellow'},
+                {'range': [6, 10], 'color': 'red'}
+            ],
+            'threshold': {
+                'line': {'color': "black", 'width': 4},
+                'thickness': 0.75,
+                'value': normalized_score
+            }
+        }
+    ))
+
+    fig.update_layout(
+        height=250,
+        margin=dict(l=20, r=20, t=30, b=20)
+    )
+
+    # Return the risk assessment
+    return html.Div([
+        html.H4(f"Risk Level: {risk_level}", style={'color': color, 'marginBottom': '10px', 'textAlign': 'center'}),
+        dcc.Graph(figure=fig, config={'displayModeBar': False}),
+        html.Div([
+            html.H5("Recommendations:"),
+            html.P(advice),
+            html.Ul([
+                html.Li("Avoid smoking and secondhand smoke"),
+                html.Li("Limit exposure to air pollution and industrial chemicals"),
+                html.Li("Maintain a healthy diet and exercise regularly"),
+                html.Li("Discuss screening options with your doctor")
+            ])
+        ], style={'marginTop': '15px', 'backgroundColor': '#f8f9fa', 'padding': '10px', 'borderRadius': '5px'})
+    ])
 
 
 # Run the app
