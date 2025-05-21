@@ -81,21 +81,76 @@ def generate_geographic_map_figure(df_filtered, country_iso_map=country_map):
 
 
 def generate_smoking_risk_figure(df_filtered):
+    # Calculate average mortality risk for each smoking status
+    avg_mortality_by_smoking = df_filtered.groupby('Smoking_Status')['Mortality_Risk'].mean().reset_index()
 
-    # Create violin plot
+    # Overall average mortality risk
+    overall_avg_mortality = df_filtered['Mortality_Risk'].mean()
+
+    # Create violin plot with clearer title
     fig = px.violin(
         df_filtered,
         x='Smoking_Status',
         y='Mortality_Risk',
-        title="Mortality Risk by Smoking Status",
+        title="How Smoking Affects Mortality Risk",
         category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
         labels={
             'Smoking_Status': 'Smoking Status',
             'Mortality_Risk': 'Mortality Risk (0-1)'
         },
-        box=False,
-        points=False,
-        hover_data={}  # Disables default fields
+        box=True,  # Show box plot inside violin
+        points=False,  # Don't show individual points
+        color='Smoking_Status',
+        color_discrete_map={
+            'Non-Smoker': '#2ca02c',  # Green
+            'Former Smoker': '#ff7f0e',  # Orange
+            'Smoker': '#d62728'  # Red
+        }
+    )
+
+    # Add average reference line
+    fig.add_shape(
+        type="line",
+        x0=-0.5,
+        y0=overall_avg_mortality,
+        x1=2.5,
+        y1=overall_avg_mortality,
+        line=dict(color="black", width=1.5, dash="dash"),
+    )
+
+    # Add annotation for average
+    fig.add_annotation(
+        x=2.5,
+        y=overall_avg_mortality,
+        text=f"Overall average: {overall_avg_mortality:.2f}",
+        showarrow=False,
+        font=dict(size=10),
+        xshift=45,
+        align="left"
+    )
+
+    # Add annotation for smokers risk
+    smoker_avg = \
+    avg_mortality_by_smoking[avg_mortality_by_smoking['Smoking_Status'] == 'Smoker']['Mortality_Risk'].values[0]
+    nonsmoker_avg = \
+    avg_mortality_by_smoking[avg_mortality_by_smoking['Smoking_Status'] == 'Non-Smoker']['Mortality_Risk'].values[0]
+
+    # Calculate the percentage increase
+    pct_increase = ((smoker_avg - nonsmoker_avg) / nonsmoker_avg) * 100
+
+    # Add annotation highlighting the difference
+    fig.add_annotation(
+        x="Smoker",
+        y=smoker_avg,
+        text=f"{pct_increase:.0f}% higher risk than non-smokers",
+        showarrow=True,
+        arrowhead=1,
+        ax=0,
+        ay=-40,
+        font=dict(color="red", size=10),
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="red",
+        borderwidth=1
     )
 
     # Clean layout
@@ -103,7 +158,13 @@ def generate_smoking_risk_figure(df_filtered):
         margin=dict(l=60, r=20, t=60, b=50),
         hovermode='x unified',
         yaxis_title='Mortality Risk (0-1)',
-        showlegend=False
+        showlegend=False,
+        title_font=dict(size=14)
+    )
+
+    # Update hover template
+    fig.update_traces(
+        hovertemplate="<b>%{x}</b><br>Mortality Risk: %{y:.2f}<br><extra></extra>"
     )
 
     return fig
