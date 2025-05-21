@@ -4,7 +4,6 @@ import dash_bootstrap_components as dbc
 
 from tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, generate_gender_pie_figure, generate_family_history_impact_figure, generate_ses_figure, generate_treatment_acces_figure
 
-# Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 
@@ -74,66 +73,107 @@ app.layout = dbc.Container([
     dbc.Row([
         # --- Sidebar Filters ---
         dbc.Col([
-            html.H4("🔍 Filter Data",
-                    style={'marginBottom': '20px', 'fontSize': '16px', 'color': color_theme['primary']}),
-            html.Div([
-                # Continent
-                html.Label("🌍 Continent", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                dcc.RadioItems(
-                    id='continent-filter',
-                    options=[{'label': 'All', 'value': 'all'}] + [{'label': c, 'value': c} for c in data['continents']],
-                    value='all', labelStyle={'display': 'block', 'fontSize': '12px'}, inputStyle={'marginRight': '8px'}
-                ), html.Hr(),
+            # Sticky Title for Filters
+            dbc.Row( # Sticky Title
+                html.H4("🔍 Filter Data", className="mb-2 sticky-top bg-white py-2 text-center",
+                        style={'fontSize': '1.1rem', 'color': color_theme['primary'], 'zIndex': 10, 'borderBottom': '1px solid #eee'}),
+            ),
+            dbc.Row([
+                # --- Continent Filter ---
+                dbc.Row([
+                    html.Label("🌍 Continent", className="filter-label mb-1"),
+                    dcc.Dropdown(
+                        id='continent-filter',
+                        options=[{'label': 'All', 'value': 'all'}] + [{'label': c, 'value': c} for c in data['continents']],
+                        value='all',
+                        className="dropdown"
+                    )
+                ], className="mb-2 filter-group", style={'height': '10vh'},),
 
-                # Country (map selection will update this store)
-                dcc.Store(id='map-filter-country', data='all'), # For selected country from map
-                html.Label("🗺️ Country (Select on Map)", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                html.Div(id='selected-country-display', children="All Countries", style={'fontSize': '12px', 'padding': '5px', 'border': '1px solid #ddd', 'borderRadius': '4px'}),
-                html.Hr(),
+                # --- Country Display (from map) ---
+                dbc.Row([
+                    html.Label("🗺️ Country (From Map)", className="filter-label mb-1"),
+                    dcc.Store(id='map-filter-country', data='all'),
+                    html.Div(id='selected-country-display', children="All Countries", className="filter-display-box")
+                ], className="mb-2 filter-group", style={'height': '10vh'},),
 
+                # --- Smoking Status and Cancer Type Filters ---
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("🚬 Smoking Status", className="filter-label mb-1"),
+                        dcc.RadioItems(
+                            id='smoking-filter',
+                            options=[{'label': 'All', 'value': 'all'}] + [{'label': s, 'value': s} for s in data['smoking_status']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
+                        ),
+                    ]),
+                    dbc.Col([
+                        html.Label("🔬 Cancer Type", className="filter-label mb-1"),
+                        dcc.RadioItems( # Consider dcc.Dropdown if list is very long
+                            id='cancer-type-filter',
+                            options=[{'label': 'All', 'value': 'all'}] + [{'label': ct, 'value': ct} for ct in data['cancer_types']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
+                        )
+                    ])
+                ], className="mb-2 filter-group", style={'height': '15vh'},),
 
-                # Smoking
-                html.Label("🚬 Smoking Status", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                dcc.RadioItems(
-                    id='smoking-filter',
-                    options=[{'label': 'All', 'value': 'all'}] + [{'label': s, 'value': s} for s in data['smoking_status']],
-                    value='all', labelStyle={'display': 'block', 'fontSize': '12px'}, inputStyle={'marginRight': '8px'}
-                ), html.Hr(),
+                # --- Gender Filter ---
+                dbc.Row([
+                    html.Label("👥 Gender:", className="filter-label mb-1"),
+                    dcc.RadioItems(
+                        id='sex-filter',
+                        options=[{'label': 'All Genders', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['genders']],
+                        value='all',
+                        className="compact-radio",
+                        labelClassName="compact-radio-label",
+                        inputClassName="compact-radio-input"
+                    )
+                ], className="mb-2 filter-group", style={'height': '12vh'}),
+                html.Hr(className="my-2"),
 
-                # Cancer Type
-                html.Label("🔬 Cancer Type", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                dcc.RadioItems(
-                    id='cancer-type-filter',
-                    options=[{'label': 'All', 'value': 'all'}] + [{'label': ct, 'value': ct} for ct in data['cancer_types']],
-                    value='all', labelStyle={'display': 'block', 'fontSize': '12px'}, inputStyle={'marginRight': '8px'}
-                ), html.Hr(),
+                # --- Age Range Filter ---
+                dbc.Row([
+                    html.Label("🎂 Age Range", className="filter-label mb-1"),
+                    dcc.RangeSlider(
+                        id='age-range-slider',
+                        min=int(data['ages'].min()) if not data['ages'].empty else 20, # Default min if data empty
+                        max=int(data['ages'].max()) if not data['ages'].empty else 90, # Default max
+                        value=[int(data['ages'].min()) if not data['ages'].empty else 20, int(data['ages'].max()) if not data['ages'].empty else 90],
+                        marks={i: str(i) for i in range(int(data['ages'].min()) if not data['ages'].empty else 20, (int(data['ages'].max()) if not data['ages'].empty else 90) + 1, 10)},
+                        step=1,
+                        tooltip={"placement": "bottom", "always_visible": False},
+                    )
+                ], className="filter-group", style={'height': '8vh'},),
 
-                # Gender Filter
-                html.Label("👥 Gender", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '5px'}),
-                dcc.RadioItems(
-                    id='sex-filter',
-                    options=[{'label': 'All', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['genders']],
-                    value='all', labelStyle={'display': 'block', 'fontSize': '12px'}, inputStyle={'marginRight': '8px'}
-                ), html.Hr(),
+                # --- Reset Button ---
+                dbc.Row(
+                    html.Button('Reset All Filters', id='reset-filters-button', n_clicks=0,
+                                className='btn btn-outline-danger btn-sm w-100 mt-2'), # Changed color, full width
+                    className="pt-2", style={'height': '8vh'},
+                )
 
-                # Age Range
-                html.Label("🎂 Age Range", style={'fontSize': '14px', 'fontWeight': 'bold', 'marginBottom': '10px'}),
-                dcc.RangeSlider(
-                    id='age-range-slider',
-                    min=int(data['ages'].min()) if not data['ages'].empty else 0,
-                    max=int(data['ages'].max()) if not data['ages'].empty else 100,
-                    value=[int(data['ages'].min()) if not data['ages'].empty else 0, int(data['ages'].max()) if not data['ages'].empty else 100],
-                    marks={i: str(i) for i in range(int(data['ages'].min()) if not data['ages'].empty else 0, (int(data['ages'].max()) if not data['ages'].empty else 100) + 1, 10)},
-                    step=1, tooltip={"placement": "bottom", "always_visible": False}
-                ),
-
-                html.Button('Reset All Filters', id='reset-filters-button', n_clicks=0, className='mt-3 btn btn-secondary btn-sm')
-
-
-            ], style={'padding': '15px', 'backgroundColor': 'white', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)','height':'100%','overflowY':'auto'})
-        ], width=12, lg=3,
-            style={'height': '100%', 'paddingRight': '15px'}), # Sidebar takes 3 of 12 columns on large screens, full width on small
-
+            ], style={
+                'padding': '10px',
+                'backgroundColor': 'white',
+                'borderRadius': '8px',
+                'boxShadow': '0 1px 3px rgba(0,0,0,0.05)',
+                'height': 'calc(100% - 40px)',
+                'overflowY': 'hidden'
+            })
+        ],
+        width=12, lg=3, # Sidebar column width
+        style={
+            'height': '100%', # Takes full height of its parent row (94vh)
+            'paddingRight': '0px',
+            'paddingLeft': '0px' # No left padding for the column itself
+        }
+        ),
         # --- Main Content Area with Thematic Zones ---
         # --- Main content ---
         dbc.Col([
@@ -175,7 +215,7 @@ app.layout = dbc.Container([
                     dcc.Graph(id='ses-impact-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
             ], style={'height': '28vh'})
-        ], width=12, lg=9, style={'height': '100%', 'overflowY': 'auto'}) # Main content
+        ], width=12, lg=9, style={'height': '100%', 'overflowY': 'auto'})
     ], style={'height': '94vh'})
 ], fluid=True, style={'height': '100vh', 'overflowY': 'hidden', 'padding': '20px'})
 

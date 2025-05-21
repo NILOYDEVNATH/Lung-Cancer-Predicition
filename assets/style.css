@@ -6,9 +6,90 @@ html {
 }
 
 body, html {
-    overflow-x: hidden; /* Just in case */
-    /* overflow-y: hidden !important; */ /* Keep this commented out or removed while debugging internal scrolls */
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden !important; /* Your preference for no page scroll */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* Common system font stack */
+    font-size: 0.9rem; /* Slightly smaller base font size for the whole app */
+}
+
+/* Sidebar specific styles */
+.filter-label {
+    font-size: 0.85rem !important; /* Smaller label font */
+    font-weight: bold !important;
+    color: #555;
+    display: block; /* Ensure it takes full width for margin-bottom to work well */
+    margin-bottom: 0.25rem !important; /* Reduced margin below label */
+}
+
+.compact-radio .form-check { /* Targets Bootstrap's structure for radio items */
+    margin-bottom: 0.1rem !important; /* Tighter spacing between radio options */
+    padding-left: 1.5em; /* Default is often 1.75em or more */
+}
+
+.compact-radio-label { /* Class for dcc.RadioItems labelStyle */
+    font-size: 0.8rem !important; /* Smaller font for radio item text */
+    display: block !important; /* Ensures labels stack cleanly */
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    /* line-height: 1.2; */ /* Adjust line height if needed */
+}
+
+.compact-radio-input { /* Class for dcc.RadioItems inputStyle */
+    margin-right: 0.4rem !important; /* Space between radio button and its text */
+    /* vertical-align: middle; */ /* Align radio button with text */
+}
+
+.filter-display-box {
+    font-size: 0.8rem !important;
+    padding: 0.25rem 0.4rem !important; /* Reduced padding */
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: #f9f9f9;
+    min-height: 24px; /* Ensure it has some height */
+    display: flex;
+    align-items: center;
+}
+
+.filter-group {
+    margin-bottom: 0.75rem !important; /* Consistent spacing between filter groups */
+}
+
+hr {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    border-top: 1px solid #eee !important; /* Lighter HR */
+}
+
+/* Make RangeSlider a bit more compact - this can be tricky */
+.rc-slider-handle {
+    width: 12px !important;
+    height: 12px !important;
+    margin-top: -4px !important; /* Adjust vertical alignment */
+}
+.rc-slider-track {
+    height: 4px !important; /* Thinner track */
+}
+.rc-slider-rail {
+    height: 4px !important; /* Thinner rail */
+}
+.rc-slider-mark-text {
+    font-size: 0.7rem !important; /* Smaller marks text */
+}
+
+/* Styles for .zone-container if you have them (from previous examples) */
+.zone-container {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    height: 100%;
+    display: flex; /* Added for better internal alignment if needed */
+    flex-direction: column; /* Stack children (like H5 and Graph) */
+}
+
+.zone-container .dash-graph { /* Make graph fill remaining space in flex container */
+    flex-grow: 1;
+    min-height: 0; /* Important for flex children */
 }
