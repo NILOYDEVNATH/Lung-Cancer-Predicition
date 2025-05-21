@@ -3,10 +3,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
-# Initialize the app
-app = Dash(__name__)
-
-
 # Load the real data
 def load_real_data():
     # Load the real dataset
