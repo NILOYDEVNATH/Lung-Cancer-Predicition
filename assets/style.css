@@ -1,0 +1,14 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body, html {
+    overflow-x: hidden; /* Just in case */
+    /* overflow-y: hidden !important; */ /* Keep this commented out or removed while debugging internal scrolls */
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
