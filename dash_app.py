@@ -333,6 +333,22 @@ def update_smoking_status_from_graph(clickData, current_radio_value):
     else:
         return dash.no_update
 
+@app.callback(
+    [Output('continent-filter', 'value', allow_duplicate=True),
+     Output('map-filter-country', 'data', allow_duplicate=True),
+     Output('selected-country-display', 'children', allow_duplicate=True),
+     Output('smoking-filter', 'value', allow_duplicate=True),
+     Output('cancer-type-filter', 'value', allow_duplicate=True),
+     Output('sex-filter', 'value', allow_duplicate=True),
+     Output('age-range-slider', 'value')],
+    Input('reset-filters-button', 'n_clicks'),
+    prevent_initial_call=True
+)
+def reset_all_filters(n_clicks):
+    return ('all', 'all', 'All Countries', 'all', 'all', 'all',
+            [int(data['ages'].min()) if not data['ages'].empty else 0,
+             int(data['ages'].max()) if not data['ages'].empty else 100])
+
 
 # Run the app
 if __name__ == '__main__':
