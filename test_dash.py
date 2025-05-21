@@ -69,7 +69,7 @@ app.layout = dbc.Container([
                         })
             ], style={'backgroundColor': 'white', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}
             )
-        ), style={'height': '5vh', 'marginBottom': '1vh'}
+        ), style={'height': '5vh', 'marginBottom': '0vh'}  # Reduced margin from 1vh to 0vh
     ),
 
     # Dashboard Introduction
@@ -200,7 +200,7 @@ app.layout = dbc.Container([
                     dcc.Graph(id='map-graph-output', style={'height': '100%'})  # Map
                 ], md=8, className="zone-container", style={'height': '100%'})
                 # Full width within this content column for this zone
-            ], style={'height': '36vh', 'marginBottom': '1vh'}),
+            ], style={'height': '36vh', 'marginBottom': '0vh'}),  # Removed margin to give more space to charts
 
             # --- Zone 2: Risk Factors Analysis ---
             dbc.Row([
@@ -213,7 +213,7 @@ app.layout = dbc.Container([
                 dbc.Col([
                     dcc.Graph(id='gender-graph-output', style={'height': '100%'})
                 ], md=3, className="zone-container", style={'height': '100%'}),  # Third width
-            ], style={'height': '35vh', 'marginBottom': '1vh'}),  # Increased height from 28vh to 35vh
+            ], style={'height': '38vh', 'marginBottom': '0vh'}),  # Increased height, removed margin
 
             # --- Zone 3: Survival & Healthcare Impact ---
             dbc.Row([
@@ -226,7 +226,7 @@ app.layout = dbc.Container([
                 dbc.Col([
                     dcc.Graph(id='ses-impact-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
-            ], style={'height': '35vh'})  # Increased height from 28vh to 35vh
+            ], style={'height': '38vh'})  # Increased height
         ], width=12, lg=9, style={'height': '100%', 'overflowY': 'auto'})
     ], style={'height': '94vh'}),
 
@@ -370,4 +370,4 @@ def reset_all_filters(n_clicks):
 # Run the app
 if __name__ == '__main__':
     # For older Dash versions, disable dev tools this way:
-    app.run(debug=False, port=8051)
+    app.run(debug=True, port=8051)

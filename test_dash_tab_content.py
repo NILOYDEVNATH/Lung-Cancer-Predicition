@@ -15,7 +15,6 @@ country_map = {
 }
 
 
-####################################################
 def generate_geographic_map_figure(df_filtered, country_iso_map=country_map):
     df_processed = df_filtered.copy()
     df_processed['iso_alpha3'] = df_processed['Country'].map(country_iso_map)
@@ -52,7 +51,7 @@ def generate_geographic_map_figure(df_filtered, country_iso_map=country_map):
         hover_name='Country',
         size='Count',
         projection='natural earth',
-        title="Global Lung Cancer Distribution"
+        height=400
     )
 
     # Enhanced hover information
@@ -68,29 +67,10 @@ def generate_geographic_map_figure(df_filtered, country_iso_map=country_map):
         )
     )
 
-    # Add annotation about clicking countries
-    fig.add_annotation(
-        x=0.5,
-        y=-0.15,
-        xref="paper",
-        yref="paper",
-        text="Click on a country to filter data",
-        showarrow=False,
-        font=dict(size=10, color="gray"),
-        align="center",
-        bordercolor="gray",
-        borderwidth=1,
-        borderpad=4,
-        bgcolor="white",
-        opacity=0.8
-    )
-
     fig.update_layout(
-        margin={"r": 0, "t": 45, "l": 0, "b": 0},
+        margin={"r": 0, "t": 5, "l": 0, "b": 0},
         dragmode='select',
-        clickmode='event+select',
-        title_font=dict(size=14),
-        legend_title="Continent"
+        clickmode='event+select'
     )
 
     fig.update_geos(
@@ -116,7 +96,7 @@ def generate_smoking_risk_figure(df_filtered):
         df_filtered,
         x='Smoking_Status',
         y='Mortality_Risk',
-        title=None,  # Removed title
+        title=None,
         category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
         labels={
             'Smoking_Status': 'Smoking Status',
@@ -130,7 +110,7 @@ def generate_smoking_risk_figure(df_filtered):
             'Former Smoker': '#ff7f0e',  # Orange
             'Smoker': '#d62728'  # Red
         },
-        height=400  # Increased height
+        height=600
     )
 
     # Add average reference line
@@ -172,7 +152,7 @@ def generate_smoking_risk_figure(df_filtered):
         arrowhead=1,
         ax=0,
         ay=-40,
-        font=dict(color="red", size=10),
+        font=dict(color="red", size=12),
         bgcolor="rgba(255,255,255,0.8)",
         bordercolor="red",
         borderwidth=1
@@ -180,10 +160,12 @@ def generate_smoking_risk_figure(df_filtered):
 
     # Clean layout
     fig.update_layout(
-        margin=dict(l=60, r=20, t=20, b=50),  # Reduced top margin since there's no title
+        margin=dict(l=60, r=20, t=5, b=40),
         hovermode='x unified',
         yaxis_title='Mortality Risk (0-1)',
-        showlegend=False
+        showlegend=False,
+        autosize=True,
+        plot_bgcolor='rgba(240,240,240,0.1)'
     )
 
     # Update hover template
@@ -198,10 +180,11 @@ def generate_age_dist_figure(df_filtered):
     fig = px.histogram(
         df_filtered,
         x="Age",
-        title="Age Distribution of Lung Cancer Patients",
+        title=None,
         labels={'Age': 'Age (years)', 'count': 'Number of Patients'},
         opacity=0.8,
-        color_discrete_sequence=['#1f77b4']  # Use a consistent blue color
+        color_discrete_sequence=['#1f77b4'],
+        height=600
     )
 
     # Calculate and show the average age
@@ -235,7 +218,7 @@ def generate_age_dist_figure(df_filtered):
             yref="paper",
             text="Higher risk age group →",
             showarrow=False,
-            font=dict(size=10, color="red"),
+            font=dict(size=12, color="red"),
             align="right"
         )
 
@@ -247,9 +230,10 @@ def generate_age_dist_figure(df_filtered):
     )
 
     fig.update_layout(
-        margin=dict(l=50, r=20, t=50, b=40),
+        margin=dict(l=50, r=20, t=5, b=30),
         bargap=0.1,
-        title_font=dict(size=14)
+        autosize=True,
+        plot_bgcolor='rgba(240,240,240,0.1)'
     )
 
     return fig
@@ -263,28 +247,18 @@ def generate_gender_pie_figure(df_filtered):
         gender_counts,
         values='Count',
         names='Gender',
-        title="Gender Distribution",
+        title=None,
         labels={'Gender': 'Gender', 'Count': 'Number of Patients'},
         color_discrete_map={
             'Male': '#1f77b4',  # Blue
             'Female': '#e377c2'  # Pink
-        }
+        },
+        height=600
     )
 
     fig.update_layout(
-        margin=dict(l=50, r=20, t=50, b=40),
-        title_font=dict(size=14)
-    )
-
-    # Add instructions for interactivity
-    fig.add_annotation(
-        x=0.5,
-        y=-0.2,
-        xref="paper",
-        yref="paper",
-        text="Click on a segment to filter by gender",
-        showarrow=False,
-        font=dict(size=10, color="gray"),
+        margin=dict(l=50, r=20, t=5, b=30),
+        autosize=True
     )
 
     fig.update_traces(
@@ -293,7 +267,8 @@ def generate_gender_pie_figure(df_filtered):
             "Number of Patients: %{value}<br>"
             "Percent: %{percent}<extra></extra>"
         ),
-        textinfo='percent+label'
+        textinfo='percent+label',
+        textfont=dict(size=14)
     )
 
     return fig
@@ -308,14 +283,15 @@ def generate_family_history_impact_figure(df_filtered):
         df_filtered,
         x="Family_History",
         y="5_Year_Survival_Probability",
-        title="How Family History Affects Survival Chance",
+        title=None,
         color="Family_History",
         color_discrete_map={
             'Yes': '#d62728',  # Red for presence of family history
             'No': '#2ca02c'  # Green for absence
         },
         box=True,  # Show box plot inside violin
-        points=False  # Don't show individual points
+        points=False,  # Don't show individual points
+        height=600
     )
 
     # Add average reference line
@@ -356,38 +332,23 @@ def generate_family_history_impact_figure(df_filtered):
             arrowhead=1,
             ax=0,
             ay=40,
-            font=dict(color="red", size=10),
+            font=dict(color="red", size=12),
             bgcolor="rgba(255,255,255,0.8)",
             borderwidth=1
         )
 
     fig.update_layout(
-        margin=dict(l=50, r=20, t=50, b=40),
+        margin=dict(l=50, r=20, t=5, b=30),
         yaxis_title="5-Year Survival Probability (0-1)",
         xaxis_title="Family History of Lung Cancer",
         showlegend=False,
-        title_font=dict(size=14)
+        autosize=True,
+        plot_bgcolor='rgba(240,240,240,0.1)'
     )
 
     # Update hover template
     fig.update_traces(
         hovertemplate="<b>Family History: %{x}</b><br>5-Year Survival: %{y:.2f}<br><extra></extra>"
-    )
-
-    # Add key insight but positioned better
-    fig.add_annotation(
-        x=0.5,
-        y=-0.15,  # Position below the chart instead of above
-        xref="paper",
-        yref="paper",
-        text="Early screening is crucial for those with family history",
-        showarrow=False,
-        font=dict(size=10, color="black"),
-        align="center",
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="red",
-        borderwidth=1,
-        borderpad=4
     )
 
     return fig
@@ -400,13 +361,14 @@ def generate_ses_figure(df_filtered):
         x="Socioeconomic_Status",
         color="Stage_at_Diagnosis",
         barmode='group',
-        title="Cancer Stage at Diagnosis by Socioeconomic Status",  # Changed from "by Income Level"
+        title=None,
         category_orders={"Socioeconomic_Status": ["Low", "Middle", "High"]},
         color_discrete_sequence=px.colors.qualitative.Set2,
         labels={
-            "Socioeconomic_Status": "Socioeconomic Status",  # Changed from "Income Level"
+            "Socioeconomic_Status": "Socioeconomic Status",
             "Stage_at_Diagnosis": "Cancer Stage"
-        }
+        },
+        height=600
     )
 
     # Count cases by SES and stage
@@ -431,28 +393,27 @@ def generate_ses_figure(df_filtered):
                 arrowhead=1,
                 ax=0,
                 ay=-30,
-                font=dict(color="red", size=10),
+                font=dict(color="red", size=12),
                 bgcolor="rgba(255,255,255,0.8)",
                 bordercolor="red",
                 borderwidth=1
             )
 
     fig.update_layout(
-        margin=dict(l=50, r=20, t=50, b=40),
+        margin=dict(l=50, r=20, t=5, b=30),
         bargap=0.1,
-        xaxis_title="Socioeconomic Status",  # Changed from "Income Level"
+        xaxis_title="Socioeconomic Status",
         yaxis_title="Number of Patients",
         legend_title="Cancer Stage",
-        title_font=dict(size=14),
-        showlegend=False  # Remove legend as requested
+        showlegend=False,
+        autosize=True,
+        plot_bgcolor='rgba(240,240,240,0.1)'
     )
-
-    # Removed the insight annotation as requested
 
     fig.update_traces(
         hovertemplate=(
             "Stage: %{fullData.name}<br>"
-            "Socioeconomic Status: %{x}<br>"  # Changed from "Income Level"
+            "Socioeconomic Status: %{x}<br>"
             "Number of Patients: %{y}<extra></extra>"
         )
     )
@@ -475,7 +436,7 @@ def generate_treatment_acces_figure(df_filtered):
         df_filtered,
         x="Treatment_Access",
         y="5_Year_Survival_Probability",
-        title="How Treatment Access Affects Survival",
+        title=None,
         category_orders={"Treatment_Access": ["None", "Partial", "Full"]},
         color="Treatment_Access",
         color_discrete_map={
@@ -487,7 +448,8 @@ def generate_treatment_acces_figure(df_filtered):
             "Treatment_Access": "Access to Treatment",
             "5_Year_Survival_Probability": "5-Year Survival Rate (0-1)"
         },
-        box=True
+        box=True,
+        height=600
     )
 
     # Add average reference line
@@ -530,31 +492,22 @@ def generate_treatment_acces_figure(df_filtered):
             arrowhead=1,
             ax=0,
             ay=-40,
-            font=dict(color="green", size=10),
+            font=dict(color="green", size=12),
             bgcolor="rgba(255,255,255,0.8)",
             bordercolor="green",
             borderwidth=1
         )
 
     fig.update_layout(
-        margin=dict(l=50, r=20, t=50, b=40),
-        showlegend=False,  # Remove legend as requested
-        title_font=dict(size=14)
+        margin=dict(l=50, r=20, t=5, b=30),
+        showlegend=False,
+        autosize=True,
+        plot_bgcolor='rgba(240,240,240,0.1)'
     )
 
-    # Add key insight below the chart instead of above
-    fig.add_annotation(
-        x=0.5,
-        y=-0.15,
-        xref="paper",
-        yref="paper",
-        text="Full access to treatment significantly improves survival chances",
-        showarrow=False,
-        font=dict(size=10),
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="green",
-        borderwidth=1,
-        borderpad=4
+    # Update hover template for better information
+    fig.update_traces(
+        hovertemplate="<b>Treatment Access: %{x}</b><br>5-Year Survival: %{y:.2f}<br><extra></extra>"
     )
 
     return fig
@@ -574,12 +527,9 @@ def generate_kpi_cards(df_filtered):
 
     kpi_cards = [
         create_kpi_card("Total Individuals", f"{total_individuals:,}", "kpi-total-individuals", "primary"),
-        create_kpi_card("Mortality Risk", f"{avg_mortality_risk:.1f}%", "kpi-avg-mortality", mortality_color,
-                        tooltip="The likelihood of death from lung cancer within 5 years"),
-        create_kpi_card("5-Year Survival", f"{avg_survival_prob:.1f}%", "kpi-avg-survival", survival_color,
-                        tooltip="The chance of surviving at least 5 years after diagnosis"),
-        create_kpi_card("Average Age", f"{avg_age:.1f} years", "kpi-avg-age", "info",
-                        tooltip="The average age of patients in this dataset")
+        create_kpi_card("Mortality Risk", f"{avg_mortality_risk:.1f}%", "kpi-avg-mortality", mortality_color),
+        create_kpi_card("5-Year Survival", f"{avg_survival_prob:.1f}%", "kpi-avg-survival", survival_color),
+        create_kpi_card("Average Age", f"{avg_age:.1f} years", "kpi-avg-age", "info")
     ]
 
     return kpi_cards

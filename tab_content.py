@@ -179,7 +179,6 @@ def generate_age_dist_figure(df_filtered):
         labels={'Age': 'Age (years)', 'count': 'Number of Patients'},
         opacity=0.8,
         color_discrete_sequence=['#1f77b4'] , # Use a consistent blue color
-        height=210
     )
 
     # Calculate and show the average age
