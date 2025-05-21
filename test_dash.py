@@ -3,6 +3,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
+app = Dash(__name__)
+
+
 # Load the real data
 def load_real_data():
     # Load the real dataset
@@ -293,6 +296,24 @@ def render_dashboard(continent, country, smoking, cancer_type, sex, age_range):
     else:
         most_common_cancer = "No data"
 
+    # Create the choropleth map figure
+    choropleth_fig = px.choropleth(
+        filtered_df.groupby('Country')['Mortality_Risk'].mean().reset_index(),
+        locations="Country",
+        locationmode="country names",
+        color="Mortality_Risk",
+        color_continuous_scale="Reds",
+        title="Average Mortality Risk by Country",
+        labels={"Mortality_Risk": "Mortality Risk"}
+    )
+
+    # Add id to the map graph for the clickData callback
+    map_graph = dcc.Graph(
+        id='choropleth-map',
+        figure=choropleth_fig,
+        config={'displayModeBar': True}
+    )
+
     return html.Div([
         # Summary statistics
         html.Div([
@@ -327,17 +348,7 @@ def render_dashboard(continent, country, smoking, cancer_type, sex, age_range):
         html.Div([
             html.H3("Geographic Distribution", style={'fontSize': '18px', 'marginBottom': '10px'}),
             html.Div([
-                dcc.Graph(
-                    figure=px.choropleth(
-                        filtered_df.groupby('Country')['Mortality_Risk'].mean().reset_index(),
-                        locations="Country",
-                        locationmode="country names",
-                        color="Mortality_Risk",
-                        color_continuous_scale="Reds",
-                        title="Average Mortality Risk by Country",
-                        labels={"Mortality_Risk": "Mortality Risk"}
-                    )
-                )
+                map_graph
             ])
         ], style={'marginBottom': '30px'}),
 
@@ -459,15 +470,16 @@ def update_continent_options(selected_country):
     return options, value
 
 
+# Fixed callback - using choropleth-map clickData instead of geographic-tab selectedData
 @app.callback(
     Output('map-filter', 'data'),
-    Input('geographic-tab', 'selectedData')
+    Input('choropleth-map', 'clickData')
 )
-def update_country_filter(selected_data):
-    if selected_data and 'points' in selected_data:
-        selected_countries = [point['hovertext'] for point in selected_data['points']]
-        print(f"Selected countries: {selected_countries}")
-        return ', '.join(selected_countries)
+def update_country_filter(click_data):
+    if click_data and 'points' in click_data:
+        selected_country = click_data['points'][0]['location']
+        print(f"Selected country: {selected_country}")
+        return selected_country
     return 'all'
 
 
