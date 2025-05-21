@@ -12,6 +12,7 @@ country_map = {
             'Vietnam': 'VNM', 'Iran': 'IRN', 'China': 'CHN', 'Mexico': 'MEX', 'India': 'IND',
             'Philippines': 'PHL', 'France': 'FRA', 'Ethiopia': 'ETH'
         }
+####################################################
 
 
 def generate_geographic_map_figure(df_filtered, country_iso_map=country_map):
@@ -98,7 +99,6 @@ def generate_family_history_impact_figure(df_filtered):
         df_filtered,
         x="Family_History",
         y="5_Year_Survival_Probability",
-        color="Family_History",
         title="Impact of Family History on Survival Probability",
         color_discrete_sequence=px.colors.qualitative.Pastel
     )
@@ -113,7 +113,6 @@ def generate_ses_figure(df_filtered):
     fig = px.histogram(
         df_filtered,
         x="Socioeconomic_Status",
-        color="Stage_at_Diagnosis",
         barmode='group',
         title="Cancer Stage by Socioeconomic Status",
         category_orders={"Socioeconomic_Status": ["Low", "Middle", "High"]},
@@ -133,7 +132,6 @@ def generate_treatment_acces_figure(df_filtered):
         df_filtered,
         x="Treatment_Access",
         y="5_Year_Survival_Probability",
-        color="Treatment_Access",
         title="5-Year Survival Probability by Treatment Access",
         category_orders={"Treatment_Access": ["None", "Partial", "Full"]},
     )
@@ -147,9 +145,9 @@ def generate_kpi_cards(df_filtered):
     # --- Calculate KPI Values ---
     kpi_cards = []
     total_individuals = len(df_filtered)
-    avg_mortality_risk = np.nanmean(df_filtered['Mortality_Risk']) * 100 if 'Mortality_Risk' in df_filtered else 0
-    avg_survival_prob = np.nanmean(df_filtered['5_Year_Survival_Probability']) * 100 if '5_Year_Survival_Probability' in df_filtered else 0
-    avg_age = np.nanmean(df_filtered['Age']) if 'Age' in df_filtered else 0
+    avg_mortality_risk = np.nanmean(df_filtered['Mortality_Risk']) * 100
+    avg_survival_prob = np.nanmean(df_filtered['5_Year_Survival_Probability']) * 100
+    avg_age = np.nanmean(df_filtered['Age'])
 
     kpi_cards.append(create_kpi_card("Total Individuals", f"{total_individuals:,}", "kpi-total-individuals"))
     kpi_cards.append(create_kpi_card("Avg. Mortality Risk", f"{avg_mortality_risk:.1f}%", "kpi-avg-mortality", color="danger" if avg_mortality_risk > 50 else "success"))
