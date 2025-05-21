@@ -175,9 +175,43 @@ def generate_age_dist_figure(df_filtered):
     fig = px.histogram(
         df_filtered,
         x="Age",
-        title="Patient Age Distribution (Histogram)",
-        labels={'Age': 'Age', 'count': 'Number of Patients'},
-        opacity=0.8
+        title="Age Distribution of Lung Cancer Patients",
+        labels={'Age': 'Age (years)', 'count': 'Number of Patients'},
+        opacity=0.8,
+        color_discrete_sequence=['#1f77b4']  # Use a consistent blue color
+    )
+
+    # Calculate and show the average age
+    avg_age = df_filtered['Age'].mean()
+
+    # Add a vertical line for average age
+    fig.add_vline(
+        x=avg_age,
+        line_width=2,
+        line_dash="dash",
+        line_color="red",
+        annotation_text=f"Average: {avg_age:.1f} years",
+        annotation_position="top right"
+    )
+
+    # Highlight high-risk age groups (example: over 65)
+    high_risk_age = 65
+
+    # Add annotation for high-risk age groups
+    fig.add_annotation(
+        x=high_risk_age,
+        y=0.95,
+        yref="paper",
+        text="Higher risk age group",
+        showarrow=True,
+        arrowhead=1,
+        arrowcolor="red",
+        ax=0,
+        ay=-30,
+        font=dict(size=10, color="red"),
+        bordercolor="red",
+        borderwidth=1,
+        bgcolor="white"
     )
 
     fig.update_traces(
@@ -189,7 +223,8 @@ def generate_age_dist_figure(df_filtered):
 
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
-        bargap=0.1
+        bargap=0.1,
+        title_font=dict(size=14)
     )
 
     return fig
@@ -223,18 +258,96 @@ def generate_gender_pie_figure(df_filtered):
 
 
 def generate_family_history_impact_figure(df_filtered):
-    # Family History Impact
+    # Overall average survival probability
+    overall_avg_survival = df_filtered['5_Year_Survival_Probability'].mean()
+
+    # Create a more informative violin plot
     fig = px.violin(
         df_filtered,
         x="Family_History",
         y="5_Year_Survival_Probability",
-        title="Impact of Family History on Survival Probability",
-        color_discrete_sequence=px.colors.qualitative.Pastel
+        title="How Family History Affects Survival Chance",
+        color="Family_History",
+        color_discrete_map={
+            'Yes': '#d62728',  # Red for presence of family history
+            'No': '#2ca02c'  # Green for absence
+        },
+        box=True,  # Show box plot inside violin
+        points=False  # Don't show individual points
     )
+
+    # Add average reference line
+    fig.add_shape(
+        type="line",
+        x0=-0.5,
+        y0=overall_avg_survival,
+        x1=1.5,
+        y1=overall_avg_survival,
+        line=dict(color="black", width=1.5, dash="dash"),
+    )
+
+    # Add annotation for average
+    fig.add_annotation(
+        x=1.5,
+        y=overall_avg_survival,
+        text=f"Overall average: {overall_avg_survival:.2f}",
+        showarrow=False,
+        font=dict(size=10),
+        xshift=50,
+        align="left"
+    )
+
+    # Calculate impact of family history
+    avg_survival_with_history = df_filtered[df_filtered['Family_History'] == 'Yes'][
+        '5_Year_Survival_Probability'].mean()
+    avg_survival_without_history = df_filtered[df_filtered['Family_History'] == 'No'][
+        '5_Year_Survival_Probability'].mean()
+
+    # Add comparison annotation
+    if avg_survival_with_history < avg_survival_without_history:
+        diff_pct = ((avg_survival_without_history - avg_survival_with_history) / avg_survival_with_history) * 100
+        fig.add_annotation(
+            x="Yes",
+            y=avg_survival_with_history,
+            text=f"{diff_pct:.0f}% lower survival rate",
+            showarrow=True,
+            arrowhead=1,
+            ax=0,
+            ay=40,
+            font=dict(color="red", size=10),
+            bgcolor="rgba(255,255,255,0.8)",
+            borderwidth=1
+        )
+
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
-        bargap=0.1
+        yaxis_title="5-Year Survival Probability (0-1)",
+        xaxis_title="Family History of Lung Cancer",
+        showlegend=False,
+        title_font=dict(size=14)
     )
+
+    # Update hover template
+    fig.update_traces(
+        hovertemplate="<b>Family History: %{x}</b><br>5-Year Survival: %{y:.2f}<br><extra></extra>"
+    )
+
+    # Add key insight
+    fig.add_annotation(
+        x=0.5,
+        y=1.05,
+        xref="paper",
+        yref="paper",
+        text="Early screening is crucial for those with family history",
+        showarrow=False,
+        font=dict(size=10, color="black"),
+        align="center",
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="red",
+        borderwidth=1,
+        borderpad=4
+    )
+
     return fig
 
 def generate_ses_figure(df_filtered):
@@ -280,6 +393,16 @@ def generate_treatment_acces_figure(df_filtered):
         y="5_Year_Survival_Probability",
         title="5-Year Survival Probability by Treatment Access",
         category_orders={"Treatment_Access": ["None", "Partial", "Full"]},
+        color="Treatment_Access",
+        color_discrete_map={
+            "None": "#d62728",  # Red
+            "Partial": "#ff7f0e",  # Orange
+            "Full": "#2ca02c"  # Green
+        },
+        labels={
+            "Treatment_Access": "Access to Treatment",
+            "5_Year_Survival_Probability": "5-Year Survival Rate (0-1)"
+        },
     )
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
