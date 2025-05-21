@@ -1,8 +1,14 @@
+import numpy as np
 from dash import Dash, dcc, html, Input, Output, State, dash
 import pandas as pd
 import dash_bootstrap_components as dbc
 
 from tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, generate_gender_pie_figure, generate_family_history_impact_figure, generate_ses_figure, generate_treatment_acces_figure, generate_kpi_cards
+
+CUSTOM_NA_VALUES = [
+    '', '#N/A', '#N/A N/A', '#NA', '-1.#IND', '-1.#QNAN', '-NaN', '-nan',
+    '1.#IND', '1.#QNAN', '<NA>', 'N/A', 'NA', 'NULL', 'NaN', 'n/a',
+    'nan', 'null']
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -10,7 +16,9 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 # Load the real data
 def load_real_data():
     # Load the real dataset
-    df1 = pd.read_csv('lung_cancer_prediction.csv')
+
+    df1 = pd.read_csv('lung_cancer_prediction.csv', keep_default_na=True)
+    df1 = df1.replace(np.nan, 'None', regex=True)
 
     # Convert smoking status to an ordered category
     smoking_order = ['Non-Smoker', 'Former Smoker', 'Smoker']
@@ -30,7 +38,10 @@ def load_real_data():
         'cancer_types': df1['Cancer_Type'].unique().tolist(),
         'mutation_types': [mt for mt in df1['Mutation_Type'].unique() if pd.notna(mt)],
         'ages': df1['Age'],
-        'genders': df1['Gender'].unique().tolist()
+        'genders': df1['Gender'].unique().tolist(),
+        'family_history': df1['Family_History'].unique().tolist(),
+        'treatment_access': df1['Treatment_Access'].unique().tolist(),
+        'ses': df1['Socioeconomic_Status'].unique().tolist()
     }
 
 
@@ -112,9 +123,20 @@ app.layout = dbc.Container([
                     ]),
                     dbc.Col([
                         html.Label("🔬 Cancer Type", className="filter-label mb-1"),
-                        dcc.RadioItems( # Consider dcc.Dropdown if list is very long
+                        dcc.RadioItems(
                             id='cancer-type-filter',
                             options=[{'label': 'All', 'value': 'all'}] + [{'label': ct, 'value': ct} for ct in data['cancer_types']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
+                        )
+                    ]),
+                    dbc.Col([
+                        html.Label("Family History", className="filter-label mb-1"),
+                        dcc.RadioItems(
+                            id='family-history-filter',
+                            options=[{'label':'All','value':'all'}] + [{'label': ct, 'value': ct} for ct in data['family_history']],
                             value='all',
                             className="compact-radio",
                             labelClassName="compact-radio-label",
@@ -125,18 +147,43 @@ app.layout = dbc.Container([
 
                 # --- Gender Filter ---
                 dbc.Row([
-                    html.Label("👥 Gender:", className="filter-label mb-1"),
-                    dcc.RadioItems(
-                        id='sex-filter',
-                        options=[{'label': 'All Genders', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['genders']],
-                        value='all',
-                        className="compact-radio",
-                        labelClassName="compact-radio-label",
-                        inputClassName="compact-radio-input"
+                    dbc.Col([
+                        html.Label("👥 Gender:", className="filter-label mb-1"),
+                        dcc.RadioItems(
+                            id='sex-filter',
+                            options=[{'label': 'All Genders', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['genders']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
                     )
+                    ]),
+                    dbc.Col([
+                        html.Label("Treatment Access:", className="filter-label mb-1"),
+                        dcc.RadioItems(
+                            id='treatment-access-filter',
+                            options=[{'label': 'All', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['treatment_access']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
+
+                    )
+                    ]),
+                    dbc.Col([
+                        html.Label("Socioeconomic Status", className="filter-label mb-1"),
+                        dcc.RadioItems(
+                            id='ses-filter',
+                            options=[{'label': 'All', 'value': 'all'}] + [{'label': g, 'value': g} for g in data['ses']],
+                            value='all',
+                            className="compact-radio",
+                            labelClassName="compact-radio-label",
+                            inputClassName="compact-radio-input"
+                    ),
+                    ])
+
                 ], className="mb-2 filter-group", style={'height': '12vh'}),
                 html.Hr(className="my-2"),
-
                 # --- Age Range Filter ---
                 dbc.Row([
                     html.Label("🎂 Age Range", className="filter-label mb-1"),
@@ -219,9 +266,9 @@ app.layout = dbc.Container([
             ], style={'height': '28vh'})
         ], width=12, lg=9, style={'height': '100%', 'overflowY': 'auto'})
     ], style={'height': '94vh'})
-], fluid=True, style={'height': '100vh', 'overflowY': 'hidden', 'padding': '20px'})
+], fluid=True, style={'height': '100vh', 'overflowY': 'hidden', 'padding': '20px'}),
 
-def filter_data(df, continent='all', country='all', smoking='all', cancer_type='all', sex='all', age_range=(0,100)):
+def filter_data(df, continent='all', country='all', smoking='all', cancer_type='all', sex='all', age_range=(0,100), family_history='all', treatment_access = 'all', ses = 'all'):
     min_age, max_age = age_range
     filtered_df = df.copy()
 
@@ -235,7 +282,12 @@ def filter_data(df, continent='all', country='all', smoking='all', cancer_type='
         filtered_df = filtered_df[filtered_df['Cancer_Type'] == cancer_type]
     if sex != 'all':
         filtered_df = filtered_df[filtered_df['Gender'] == sex]
-
+    if family_history != 'all':
+        filtered_df = filtered_df[filtered_df['Family_History'] == family_history]
+    if treatment_access != 'all':
+        filtered_df = filtered_df[filtered_df['Treatment_Access'] == treatment_access]
+    if ses != 'all':
+        filtered_df = filtered_df[filtered_df['Socioeconomic_Status'] == ses]
     filtered_df = filtered_df[
         (filtered_df['Age'] >= min_age) & (filtered_df['Age'] <= max_age)
         ]
@@ -257,10 +309,13 @@ def filter_data(df, continent='all', country='all', smoking='all', cancer_type='
      Input('cancer-type-filter', 'value'),
      Input('sex-filter', 'value'),
      Input('age-range-slider', 'value'),
+     Input('family-history-filter','value'),
+     Input('treatment-access-filter','value'),
+     Input('ses-filter', 'value')
      ]
 )
-def update_graphs(continent, selected_country_from_store, sidebar_smoking, cancer_type, sex, age_range):
-    filtered = filter_data(df.copy(), continent, selected_country_from_store, sidebar_smoking, cancer_type, sex, age_range)
+def update_graphs(continent, selected_country_from_store, sidebar_smoking, cancer_type, sex, age_range, family_history, treatment_access,ses):
+    filtered = filter_data(df.copy(), continent, selected_country_from_store, sidebar_smoking, cancer_type, sex, age_range, family_history, treatment_access, ses)
     fig_map = generate_geographic_map_figure(filtered)
     fig_smoking_risk = generate_smoking_risk_figure(filtered)
     fig_age_dist = generate_age_dist_figure(filtered)
@@ -333,6 +388,52 @@ def update_smoking_status_from_graph(clickData, current_radio_value):
     else:
         return dash.no_update
 
+
+@app.callback(
+    Output('family-history-filter','value'),
+    Input('family-history-graph-output','clickData'),
+    State('family-history-filter','value')
+)
+def update_family_history_from_graph(clickData, current_radio_value):
+    if clickData:
+        clicked_smoked_label = clickData['points'][0]['x']
+        if clicked_smoked_label == current_radio_value:
+            return 'all'
+        else:
+            return clicked_smoked_label
+    else:
+        return dash.no_update
+
+@app.callback(
+    Output('treatment-access-filter','value'),
+    Input('treatment-access-graph-output','clickData'),
+    State('treatment-access-filter','value')
+)
+def update_family_history_from_graph(clickData, current_radio_value):
+    if clickData:
+        clicked_smoked_label = clickData['points'][0]['x']
+        if clicked_smoked_label == current_radio_value:
+            return 'all'
+        else:
+            return clicked_smoked_label
+    else:
+        return dash.no_update
+
+@app.callback(
+    Output('ses-filter','value'),
+    Input('ses-impact-graph-output','clickData'),
+    State('ses-filter','value')
+)
+def update_family_history_from_graph(clickData, current_radio_value):
+    if clickData:
+        clicked_smoked_label = clickData['points'][0]['x']
+        if clicked_smoked_label == current_radio_value:
+            return 'all'
+        else:
+            return clicked_smoked_label
+    else:
+        return dash.no_update
+
 @app.callback(
     [Output('continent-filter', 'value', allow_duplicate=True),
      Output('map-filter-country', 'data', allow_duplicate=True),
@@ -340,14 +441,17 @@ def update_smoking_status_from_graph(clickData, current_radio_value):
      Output('smoking-filter', 'value', allow_duplicate=True),
      Output('cancer-type-filter', 'value', allow_duplicate=True),
      Output('sex-filter', 'value', allow_duplicate=True),
-     Output('age-range-slider', 'value')],
+     Output('age-range-slider', 'value'),
+     Output('family-history-filter','value',allow_duplicate=True),
+     Output('treatment-access-filter','value',allow_duplicate=True),
+     Output('ses-filter','value',allow_duplicate=True)],
     Input('reset-filters-button', 'n_clicks'),
     prevent_initial_call=True
 )
 def reset_all_filters(n_clicks):
     return ('all', 'all', 'All Countries', 'all', 'all', 'all',
             [int(data['ages'].min()) if not data['ages'].empty else 0,
-             int(data['ages'].max()) if not data['ages'].empty else 100])
+             int(data['ages'].max()) if not data['ages'].empty else 100],'all','all','all')
 
 
 # Run the app
