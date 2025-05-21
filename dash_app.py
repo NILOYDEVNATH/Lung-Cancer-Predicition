@@ -7,7 +7,6 @@ from tab_content import generate_geographic_map_figure, generate_smoking_risk_fi
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-
 # Load the real data
 def load_real_data():
     # Load the real dataset
