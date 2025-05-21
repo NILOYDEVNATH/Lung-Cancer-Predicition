@@ -293,11 +293,7 @@ def update_smoking_status_from_graph(clickData, current_radio_value):
     else:
         return dash.no_update
 
-@app.callback(
 
-)
-def update_age_from_graph():
-    return #TODO
 
 # Run the app
 if __name__ == '__main__':
