@@ -2,7 +2,7 @@ from dash import Dash, dcc, html, Input, Output, State, dash
 import pandas as pd
 import dash_bootstrap_components as dbc
 
-from tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, generate_gender_pie_figure, generate_family_history_impact_figure, generate_ses_figure, generate_treatment_acces_figure
+from tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, generate_gender_pie_figure, generate_family_history_impact_figure, generate_ses_figure, generate_treatment_acces_figure, generate_kpi_cards
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -140,10 +140,12 @@ app.layout = dbc.Container([
             # --- Zone 1: Geographic & Key KPIs ---
             dbc.Row([
                 dbc.Col([
+                    dbc.Row(id='kpi-cards-output', style={'height': '100%'}), # For KPI cards
+                ], md=4, className="zone-container", style={'height': '100%'}),
+                dbc.Col([
                     # html.H5("Geographic Distribution & KPIs", className="zone-title"),
-                    dbc.Row(id='kpi-cards-output', style={'height': '8vh'}), # For KPI cards
-                    dcc.Graph(id='map-graph-output', style={'height': 'calc(100% - 8vh)'}) # Map
-                ], md=12, className="zone-container", style={'height': '100%'}) # Full width within this content column for this zone
+                    dcc.Graph(id='map-graph-output', style={'height': '100%'}) # Map
+                ], md=8, className="zone-container", style={'height': '100%'}) # Full width within this content column for this zone
             ], style={'height': '36vh', 'marginBottom': '1vh'}),
 
             # --- Zone 2: Risk Factors Analysis ---
@@ -179,7 +181,7 @@ app.layout = dbc.Container([
     ], style={'height': '94vh'})
 ], fluid=True, style={'height': '100vh', 'overflowY': 'hidden', 'padding': '20px'})
 
-def filter_data(df, continent, country, smoking, cancer_type, sex, age_range):
+def filter_data(df, continent='all', country='all', smoking='all', cancer_type='all', sex='all', age_range=(0,100)):
     min_age, max_age = age_range
     filtered_df = df.copy()
 
@@ -207,7 +209,8 @@ def filter_data(df, continent, country, smoking, cancer_type, sex, age_range):
      Output('gender-graph-output','figure'),
      Output('treatment-access-graph-output','figure'),
      Output('family-history-graph-output','figure'),
-     Output('ses-impact-graph-output','figure')],
+     Output('ses-impact-graph-output','figure'),
+     Output('kpi-cards-output','children')],
     [Input('continent-filter', 'value'),
      Input('map-filter-country', 'data'),
      Input('smoking-filter', 'value'),
@@ -225,7 +228,8 @@ def update_graphs(continent, selected_country_from_store, sidebar_smoking, cance
     fig_family_history = generate_family_history_impact_figure(filtered)
     fig_ses_impact = generate_ses_figure(filtered)
     fig_treatment_impact = generate_treatment_acces_figure(filtered)
-    return fig_map, fig_smoking_risk, fig_age_dist, fig_gender_pie, fig_treatment_impact, fig_family_history, fig_ses_impact
+    kpi_cards = generate_kpi_cards(filtered)
+    return fig_map, fig_smoking_risk, fig_age_dist, fig_gender_pie, fig_treatment_impact, fig_family_history, fig_ses_impact, kpi_cards
 
 
 @app.callback(
@@ -244,8 +248,6 @@ def update_country_filter_from_map_selection(map_selected_data, current_country_
     new_continent_filter_value = dash.no_update
 
     if map_selected_data and map_selected_data['points']:
-        # Assuming 'hovertext' in your map's points contains the country name
-        # This needs to match how you set up hover_name in generate_geographic_map_figure
         selected_country_on_map = map_selected_data['points'][0]['hovertext']
 
         if selected_country_on_map != current_country_in_store: # Only update if different
@@ -253,12 +255,45 @@ def update_country_filter_from_map_selection(map_selected_data, current_country_
             new_country_display_text = f"Selected: {selected_country_on_map}"
             new_continent_filter_value = country_to_continent.get(selected_country_on_map, 'all') # Default to 'all'
     else: # No points selected (e.g., selection cleared)
-        if current_country_in_store != 'all': # Only reset if it wasn't 'all'
+        if current_country_in_store != 'all':
             new_country_for_store = 'all'
             new_country_display_text = "All Countries"
             new_continent_filter_value = 'all'
 
     return new_country_for_store, new_country_display_text, new_continent_filter_value
+
+@app.callback(
+    Output('sex-filter', 'value'),
+    Input('gender-graph-output', 'clickData'),
+    State('sex-filter', 'value'),
+    prevent_initial_call=True
+)
+def update_clicked_gender_radio_from_pie(clickData_pie, current_radio_value):
+    if clickData_pie:
+        clicked_gender_label = clickData_pie['points'][0]['label']
+        if clicked_gender_label == current_radio_value:
+            return 'all'
+        else:
+            return clicked_gender_label
+    else:
+        return dash.no_update
+
+@app.callback(
+    Output('smoking-filter', 'value'),
+    Input('smoking-risk-graph-output', 'clickData'),
+    State('smoking-filter', 'value')
+)
+def update_smoking_status_from_graph(clickData, current_radio_value):
+    if clickData:
+        clicked_smoked_label = clickData['points'][0]['x']
+        if clicked_smoked_label == current_radio_value:
+            return 'all'
+        else:
+            return clicked_smoked_label
+    else:
+        return dash.no_update
+
+
 
 # Run the app
 if __name__ == '__main__':
