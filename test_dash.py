@@ -2,12 +2,12 @@ from dash import Dash, dcc, html, Input, Output, State, dash
 import pandas as pd
 import dash_bootstrap_components as dbc
 
-from test_dash_tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, \
+from tab_content import generate_geographic_map_figure, generate_smoking_risk_figure, generate_age_dist_figure, \
     generate_gender_pie_figure, generate_family_history_impact_figure, generate_ses_figure, \
     generate_treatment_acces_figure, generate_kpi_cards
 
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
 
 # Load the real data
@@ -71,6 +71,9 @@ app.layout = dbc.Container([
             )
         ), style={'height': '5vh', 'marginBottom': '1vh'}
     ),
+
+    # Dashboard Introduction
+    # Removed introduction row
 
     # Main Row: Sidebar + Content
     dbc.Row([
@@ -191,19 +194,9 @@ app.layout = dbc.Container([
             # --- Zone 1: Geographic & Key KPIs ---
             dbc.Row([
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "These cards show key statistics for the selected filters. Compare how different factors affect mortality risk and survival probability."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dbc.Row(id='kpi-cards-output', style={'height': '100%'}),  # For KPI cards
                 ], md=4, className="zone-container", style={'height': '100%'}),
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "The map shows lung cancer patterns worldwide. Different healthcare systems and environmental factors can affect outcomes. Click on a country to filter data."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='map-graph-output', style={'height': '100%'})  # Map
                 ], md=8, className="zone-container", style={'height': '100%'})
                 # Full width within this content column for this zone
@@ -212,60 +205,32 @@ app.layout = dbc.Container([
             # --- Zone 2: Risk Factors Analysis ---
             dbc.Row([
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Smoking significantly increases lung cancer mortality risk. Click on a category to filter."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='smoking-risk-graph-output', style={'height': '100%'})  # Smoking chart
                 ], md=4, className="zone-container", style={'height': '100%'}),  # Third width
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Age distribution of patients. Lung cancer risk increases with age."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='age-dist-graph-output', style={'height': '100%'}),  # Age chart
                 ], md=5, className="zone-container", style={'height': '100%'}),  # Third width
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Gender distribution. Click a segment to filter."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='gender-graph-output', style={'height': '100%'})
                 ], md=3, className="zone-container", style={'height': '100%'}),  # Third width
-            ], style={'height': '28vh', 'marginBottom': '1vh'}),
+            ], style={'height': '35vh', 'marginBottom': '1vh'}),  # Increased height from 28vh to 35vh
 
             # --- Zone 3: Survival & Healthcare Impact ---
             dbc.Row([
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Family history can impact survival rates. People with family history may benefit from earlier screening."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='family-history-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Access to treatment has a strong impact on survival chances. Better access = better outcomes."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='treatment-access-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
                 dbc.Col([
-                    html.Div([
-                        html.P([
-                            "Socioeconomic status affects cancer stage at diagnosis. Lower status often means later detection."
-                        ], className="small text-muted mb-1")
-                    ], className="px-2"),
                     dcc.Graph(id='ses-impact-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
-            ], style={'height': '28vh'})
+            ], style={'height': '35vh'})  # Increased height from 28vh to 35vh
         ], width=12, lg=9, style={'height': '100%', 'overflowY': 'auto'})
     ], style={'height': '94vh'}),
+
+    # Action-oriented takeaways panel removed
 ], fluid=True, style={'height': '100vh', 'overflowY': 'auto', 'padding': '20px'})
 
 
@@ -404,4 +369,5 @@ def reset_all_filters(n_clicks):
 
 # Run the app
 if __name__ == '__main__':
+    # For older Dash versions, disable dev tools this way:
     app.run(debug=False, port=8051)

@@ -87,12 +87,12 @@ def generate_smoking_risk_figure(df_filtered):
     # Overall average mortality risk
     overall_avg_mortality = df_filtered['Mortality_Risk'].mean()
 
-    # Create violin plot with clearer title
+    # Create violin plot with no title
     fig = px.violin(
         df_filtered,
         x='Smoking_Status',
         y='Mortality_Risk',
-        title="How Smoking Affects Mortality Risk",
+        title=None,  # Removed title
         category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
         labels={
             'Smoking_Status': 'Smoking Status',
@@ -105,7 +105,8 @@ def generate_smoking_risk_figure(df_filtered):
             'Non-Smoker': '#2ca02c',  # Green
             'Former Smoker': '#ff7f0e',  # Orange
             'Smoker': '#d62728'  # Red
-        }
+        },
+        height=210  # Increased height
     )
 
     # Add average reference line
@@ -155,11 +156,10 @@ def generate_smoking_risk_figure(df_filtered):
 
     # Clean layout
     fig.update_layout(
-        margin=dict(l=60, r=20, t=60, b=50),
+        margin=dict(l=60, r=20, t=20, b=50),  # Reduced top margin since there's no title
         hovermode='x unified',
         yaxis_title='Mortality Risk (0-1)',
-        showlegend=False,
-        title_font=dict(size=14)
+        showlegend=False
     )
 
     # Update hover template
@@ -175,10 +175,11 @@ def generate_age_dist_figure(df_filtered):
     fig = px.histogram(
         df_filtered,
         x="Age",
-        title="Age Distribution of Lung Cancer Patients",
+        title=None,
         labels={'Age': 'Age (years)', 'count': 'Number of Patients'},
         opacity=0.8,
-        color_discrete_sequence=['#1f77b4']  # Use a consistent blue color
+        color_discrete_sequence=['#1f77b4'] , # Use a consistent blue color
+        height=210
     )
 
     # Calculate and show the average age
@@ -238,7 +239,7 @@ def generate_gender_pie_figure(df_filtered):
         gender_counts,
         values='Count',
         names='Gender',
-        title="Gender Distribution",
+        title=None,
         labels={'Gender': 'Gender', 'Count': 'Number of Patients'}
     )
 
@@ -266,7 +267,7 @@ def generate_family_history_impact_figure(df_filtered):
         df_filtered,
         x="Family_History",
         y="5_Year_Survival_Probability",
-        title="How Family History Affects Survival Chance",
+        title=None,
         color="Family_History",
         color_discrete_map={
             'Yes': '#d62728',  # Red for presence of family history
@@ -357,7 +358,7 @@ def generate_ses_figure(df_filtered):
         x="Socioeconomic_Status",
         color="Stage_at_Diagnosis",
         barmode='group',
-        title="Cancer Stage at Diagnosis by Socioeconomic Status",  # Changed from "by Income Level"
+        title=None,  # Changed from "by Income Level"
         category_orders={"Socioeconomic_Status": ["Low", "Middle", "High"]},
         color_discrete_sequence=px.colors.qualitative.Set2,
         labels={
@@ -428,7 +429,7 @@ def generate_treatment_acces_figure(df_filtered):
         df_filtered,
         x="Treatment_Access",
         y="5_Year_Survival_Probability",
-        title="5-Year Survival Probability by Treatment Access",
+        title=None,
         category_orders={"Treatment_Access": ["None", "Partial", "Full"]},
         color="Treatment_Access",
         color_discrete_map={

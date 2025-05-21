@@ -111,12 +111,12 @@ def generate_smoking_risk_figure(df_filtered):
     # Overall average mortality risk
     overall_avg_mortality = df_filtered['Mortality_Risk'].mean()
 
-    # Create violin plot with clearer title
+    # Create violin plot with no title
     fig = px.violin(
         df_filtered,
         x='Smoking_Status',
         y='Mortality_Risk',
-        title="How Smoking Affects Mortality Risk",
+        title=None,  # Removed title
         category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
         labels={
             'Smoking_Status': 'Smoking Status',
@@ -129,7 +129,8 @@ def generate_smoking_risk_figure(df_filtered):
             'Non-Smoker': '#2ca02c',  # Green
             'Former Smoker': '#ff7f0e',  # Orange
             'Smoker': '#d62728'  # Red
-        }
+        },
+        height=400  # Increased height
     )
 
     # Add average reference line
@@ -179,11 +180,10 @@ def generate_smoking_risk_figure(df_filtered):
 
     # Clean layout
     fig.update_layout(
-        margin=dict(l=60, r=20, t=60, b=50),
+        margin=dict(l=60, r=20, t=20, b=50),  # Reduced top margin since there's no title
         hovermode='x unified',
         yaxis_title='Mortality Risk (0-1)',
-        showlegend=False,
-        title_font=dict(size=14)
+        showlegend=False
     )
 
     # Update hover template
