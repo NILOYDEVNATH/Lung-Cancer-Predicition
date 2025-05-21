@@ -11,8 +11,7 @@ CUSTOM_NA_VALUES = [
     'nan', 'null']
 
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
+app = Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP])
 # Load the real data
 def load_real_data():
     # Load the real dataset
@@ -227,9 +226,19 @@ app.layout = dbc.Container([
             # --- Zone 1: Geographic & Key KPIs ---
             dbc.Row([
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "These cards show key statistics for the selected filters. Compare how different factors affect mortality risk and survival probability."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     dbc.Row(id='kpi-cards-output', style={'height': '100%'}), # For KPI cards
                 ], md=4, className="zone-container", style={'height': '100%'}),
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "The map shows lung cancer patterns worldwide. Different healthcare systems and environmental factors can affect outcomes. Click on a country to filter data."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     # html.H5("Geographic Distribution & KPIs", className="zone-title"),
                     dcc.Graph(id='map-graph-output', style={'height': '100%'}) # Map
                 ], md=8, className="zone-container", style={'height': '100%'}) # Full width within this content column for this zone
@@ -238,14 +247,29 @@ app.layout = dbc.Container([
             # --- Zone 2: Risk Factors Analysis ---
             dbc.Row([
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Smoking significantly increases lung cancer mortality risk. Click on a category to filter."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     #html.H5("Risk Factors Analysis", className="zone-title"),
                     dcc.Graph(id='smoking-risk-graph-output', style={'height': '100%'}) # Smoking chart
                 ], md=4, className="zone-container", style={'height': '100%'}), # Third width
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Age distribution of patients. Lung cancer risk increases with age."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     #html.H5("Age & Gender Insights", className="zone-title"), # Combined title
                     dcc.Graph(id='age-dist-graph-output', style={'height': '100%'}),    # Age chart
                 ], md=5, className="zone-container", style={'height': '100%'}),# Third width
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Gender distribution. Click a segment to filter."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     dcc.Graph(id='gender-graph-output', style={'height': '100%'})
                 ], md=3, className="zone-container", style={'height': '100%'}), # Third width
             ], style={'height': '28vh', 'marginBottom': '1vh'}),
@@ -253,13 +277,28 @@ app.layout = dbc.Container([
             # --- Zone 3: Survival & Healthcare Impact ---
             dbc.Row([
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Family history can impact survival rates. People with family history may benefit from earlier screening."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     dcc.Graph(id='family-history-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container",style={'height': '100%'}),
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Access to treatment has a strong impact on survival chances. Better access = better outcomes."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     #html.H5("Treatment", className="zone-title"),
                     dcc.Graph(id='treatment-access-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),
                 dbc.Col([
+                    html.Div([
+                        html.P([
+                            "Socioeconomic status affects cancer stage at diagnosis. Lower status often means later detection."
+                        ], className="small text-muted mb-1")
+                    ], className="px-2"),
                     #html.H5("SES Impact", className="zone-title"),
                     dcc.Graph(id='ses-impact-graph-output', style={'height': '100%'})
                 ], md=4, className="zone-container", style={'height': '100%'}),

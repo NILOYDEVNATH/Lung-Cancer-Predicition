@@ -404,4 +404,4 @@ def reset_all_filters(n_clicks):
 
 # Run the app
 if __name__ == '__main__':
-    app.run(debug=True, port=8051)
+    app.run(debug=False, port=8051)

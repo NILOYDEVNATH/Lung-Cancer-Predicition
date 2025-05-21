@@ -357,28 +357,65 @@ def generate_ses_figure(df_filtered):
         x="Socioeconomic_Status",
         color="Stage_at_Diagnosis",
         barmode='group',
-        title="Cancer Stage by Socioeconomic Status",
+        title="Cancer Stage at Diagnosis by Socioeconomic Status",  # Changed from "by Income Level"
         category_orders={"Socioeconomic_Status": ["Low", "Middle", "High"]},
         color_discrete_sequence=px.colors.qualitative.Set2,
+        labels={
+            "Socioeconomic_Status": "Socioeconomic Status",  # Changed from "Income Level"
+            "Stage_at_Diagnosis": "Cancer Stage"
+        }
     )
 
+    # Count cases by SES and stage
+    stage_counts = df_filtered.groupby(['Socioeconomic_Status', 'Stage_at_Diagnosis']).size().reset_index(name='Count')
+
+    # Find the percentage of late-stage diagnoses in Low SES
+    low_ses_df = stage_counts[stage_counts['Socioeconomic_Status'] == 'Low']
+    if not low_ses_df.empty:
+        late_stages = ['Stage III', 'Stage IV']
+        low_ses_late = low_ses_df[low_ses_df['Stage_at_Diagnosis'].isin(late_stages)]['Count'].sum()
+        low_ses_total = low_ses_df['Count'].sum()
+
+        if low_ses_total > 0:
+            late_pct = (low_ses_late / low_ses_total) * 100
+
+            # Add annotation showing the high percentage of late diagnoses
+            fig.add_annotation(
+                x="Low",
+                y=low_ses_late,
+                text=f"{late_pct:.0f}% diagnosed at late stages",
+                showarrow=True,
+                arrowhead=1,
+                ax=0,
+                ay=-30,
+                font=dict(color="red", size=10),
+                bgcolor="rgba(255,255,255,0.8)",
+                bordercolor="red",
+                borderwidth=1
+            )
 
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
         bargap=0.1,
-        xaxis_title="Socioeconomic Status",
+        xaxis_title="Socioeconomic Status",  # Changed from "Income Level"
         yaxis_title="Number of Patients",
-        legend_title="Cancer Stage"
+        legend_title="Cancer Stage",
+        title_font=dict(size=14),
+        showlegend=False  # Remove legend as requested
     )
+
+    # Removed the insight annotation as requested
 
     fig.update_traces(
         hovertemplate=(
             "Stage: %{fullData.name}<br>"
-            "SES: %{x}<br>"
+            "Socioeconomic Status: %{x}<br>"  # Changed from "Income Level"
             "Number of Patients: %{y}<extra></extra>"
-
         )
     )
+
+    # Make sure no text shows up in unwanted places
+    fig.update_xaxes(ticktext=["Low", "Middle", "High"])
 
     return fig
 

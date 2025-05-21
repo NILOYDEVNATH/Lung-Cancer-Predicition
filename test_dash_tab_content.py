@@ -217,25 +217,27 @@ def generate_age_dist_figure(df_filtered):
         annotation_position="top right"
     )
 
-    # Highlight high-risk age groups (example: over 65)
+    # Only add high-risk annotation if we have data above age 65
     high_risk_age = 65
+    if df_filtered['Age'].max() >= high_risk_age:
+        # Add a vertical line at the high-risk threshold
+        fig.add_vline(
+            x=high_risk_age,
+            line_width=1,
+            line_dash="dot",
+            line_color="red"
+        )
 
-    # Add annotation for high-risk age groups
-    fig.add_annotation(
-        x=high_risk_age,
-        y=0.95,
-        yref="paper",
-        text="Higher risk age group",
-        showarrow=True,
-        arrowhead=1,
-        arrowcolor="red",
-        ax=0,
-        ay=-30,
-        font=dict(size=10, color="red"),
-        bordercolor="red",
-        borderwidth=1,
-        bgcolor="white"
-    )
+        # Add text annotation for high-risk age (safer placement)
+        fig.add_annotation(
+            x=high_risk_age,
+            y=0.9,  # Position at 90% of the y-axis height
+            yref="paper",
+            text="Higher risk age group →",
+            showarrow=False,
+            font=dict(size=10, color="red"),
+            align="right"
+        )
 
     fig.update_traces(
         hovertemplate=(
@@ -372,10 +374,10 @@ def generate_family_history_impact_figure(df_filtered):
         hovertemplate="<b>Family History: %{x}</b><br>5-Year Survival: %{y:.2f}<br><extra></extra>"
     )
 
-    # Add key insight
+    # Add key insight but positioned better
     fig.add_annotation(
         x=0.5,
-        y=1.05,
+        y=-0.15,  # Position below the chart instead of above
         xref="paper",
         yref="paper",
         text="Early screening is crucial for those with family history",
@@ -398,11 +400,11 @@ def generate_ses_figure(df_filtered):
         x="Socioeconomic_Status",
         color="Stage_at_Diagnosis",
         barmode='group',
-        title="Cancer Stage at Diagnosis by Income Level",
+        title="Cancer Stage at Diagnosis by Socioeconomic Status",  # Changed from "by Income Level"
         category_orders={"Socioeconomic_Status": ["Low", "Middle", "High"]},
         color_discrete_sequence=px.colors.qualitative.Set2,
         labels={
-            "Socioeconomic_Status": "Income Level",
+            "Socioeconomic_Status": "Socioeconomic Status",  # Changed from "Income Level"
             "Stage_at_Diagnosis": "Cancer Stage"
         }
     )
@@ -438,34 +440,25 @@ def generate_ses_figure(df_filtered):
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
         bargap=0.1,
-        xaxis_title="Income Level",
+        xaxis_title="Socioeconomic Status",  # Changed from "Income Level"
         yaxis_title="Number of Patients",
         legend_title="Cancer Stage",
-        title_font=dict(size=14)
+        title_font=dict(size=14),
+        showlegend=False  # Remove legend as requested
     )
 
-    # Add insight annotation
-    fig.add_annotation(
-        x=0.5,
-        y=1.05,
-        xref="paper",
-        yref="paper",
-        text="Lower income groups often have later diagnosis stages due to limited screening access",
-        showarrow=False,
-        font=dict(size=10),
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="gray",
-        borderwidth=1,
-        borderpad=4
-    )
+    # Removed the insight annotation as requested
 
     fig.update_traces(
         hovertemplate=(
             "Stage: %{fullData.name}<br>"
-            "Income Level: %{x}<br>"
+            "Socioeconomic Status: %{x}<br>"  # Changed from "Income Level"
             "Number of Patients: %{y}<extra></extra>"
         )
     )
+
+    # Make sure no text shows up in unwanted places
+    fig.update_xaxes(ticktext=["Low", "Middle", "High"])
 
     return fig
 
@@ -545,14 +538,14 @@ def generate_treatment_acces_figure(df_filtered):
 
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
-        showlegend=False,
+        showlegend=False,  # Remove legend as requested
         title_font=dict(size=14)
     )
 
-    # Add key insight
+    # Add key insight below the chart instead of above
     fig.add_annotation(
         x=0.5,
-        y=1.05,
+        y=-0.15,
         xref="paper",
         yref="paper",
         text="Full access to treatment significantly improves survival chances",
