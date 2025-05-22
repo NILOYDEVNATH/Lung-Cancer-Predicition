@@ -64,7 +64,7 @@ color_theme = {
 # --- App layout ---
 app.layout = dbc.Container([
     # Header
-    dbc.Row(
+    dbc.Row([
         dbc.Col(
             html.Div([
                 html.H1("Lung Cancer Risk Analysis Dashboard",
@@ -75,8 +75,15 @@ app.layout = dbc.Container([
                             'fontWeight': 'bold'
                         })
             ], style={'backgroundColor': 'white','boxShadow': '0 2px 4px rgba(0,0,0,0.1)'}
-            )
-        ), style={'height': '5vh', 'marginBottom': '1vh'}
+            ), width=8
+        ),
+        dbc.Col(
+            html.P(
+                "DISCLAIMER: This visualisation is based on a syntethic dataset, and we are not proffesional healtcare workers.\nNo one should draw conclusions from it."
+            ), width=4
+        )
+    ],
+
     ),
 
     # Main Row: Sidebar + Content
@@ -244,8 +251,8 @@ app.layout = dbc.Container([
                 dbc.Col([
                     html.Div([
                         html.P([
-                            "Smoking influences lung cancer mortality risk."
-                        ], className="text-muted mb-1")
+                            "Smoking influences lung cancer mortality risk. ℹ️"
+                        ],title="A violin plot is a way to show how data is spread out. \nA thicker part means more values are in that range, a thinner part fewer values.", className="text-muted mb-1")
                     ], className="px-2"),
                     #html.H5("Risk Factors Analysis", className="zone-title"),
                     dcc.Graph(id='smoking-risk-graph-output') # Smoking chart
@@ -253,8 +260,8 @@ app.layout = dbc.Container([
                 dbc.Col([
                     html.Div([
                         html.P([
-                            "Age distribution of patients."
-                        ], className="text-muted mb-1")
+                            "Age distribution of patients. ℹ️"
+                        ], title = "A histogram shows the number of patients per age. \nHigher bar indicates more patients.",className="text-muted mb-1")
                     ], className="px-2"),
                     #html.H5("Age & Gender Insights", className="zone-title"), # Combined title
                     dcc.Graph(id='age-dist-graph-output', style={'height': '100%'}),    # Age chart
@@ -273,17 +280,18 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     html.Div([
-                        html.P([
-                            "Family history can impact survival rates."
-                        ], className="text-muted mb-1")
+                        html.P(
+                            "Family history can impact survival rates. ℹ️",
+                            title = "A violin plot is a way to show how data is spread out. \nA thicker part means more values are in that range, a thinner part fewer values."
+                        , className="text-muted mb-1")
                     ], className="px-2"),
                     dcc.Graph(id='family-history-graph-output')
                 ], md=4, className="zone-container"),
                 dbc.Col([
                     html.Div([
                         html.P([
-                            "Access to treatment has a strong impact on survival chances."
-                        ], className="text-muted mb-1")
+                            "Treatment access has an impact on survival chances. ℹ️"
+                        ], title = "A violin plot is a way to show how data is spread out. \nA thicker part means more values are in that range, a thinner part fewer values.", className="text-muted mb-1")
                     ], className="px-2"),
                     #html.H5("Treatment", className="zone-title"),
                     dcc.Graph(id='treatment-access-graph-output', style={'height': '100%'})
@@ -291,8 +299,8 @@ app.layout = dbc.Container([
                 dbc.Col([
                     html.Div([
                         html.P([
-                            "Socioeconomic status affects cancer stage at diagnosis."
-                        ], className="text-muted mb-1")
+                            "Socioeconomic status affects cancer stage at diagnosis. ℹ️"
+                        ], title = "This chart shows the number of patients per stage at diagnosis per socioeconomic status group. \nThe higher bar indicates more patients.",className="text-muted mb-1")
                     ], className="px-2"),
                     #html.H5("SES Impact", className="zone-title"),
                     dcc.Graph(id='ses-impact-graph-output', style={'height': '100%'})

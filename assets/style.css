@@ -92,4 +92,7 @@ hr {
 .zone-container .dash-graph { /* Make graph fill remaining space in flex container */
     flex-grow: 1;
     min-height: 0; /* Important for flex children */
+
+    flex-direction: column;
 }
+
