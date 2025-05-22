@@ -92,7 +92,7 @@ def generate_smoking_risk_figure(df_filtered):
         df_filtered,
         x='Smoking_Status',
         y='Mortality_Risk',
-        title=None,  # Removed title
+        title=None,
         category_orders={"Smoking_Status": ['Non-Smoker', 'Former Smoker', 'Smoker']},
         labels={
             'Smoking_Status': 'Smoking Status',
@@ -156,15 +156,17 @@ def generate_smoking_risk_figure(df_filtered):
 
     # Clean layout
     fig.update_layout(
-        margin=dict(l=60, r=20, t=20, b=50),  # Reduced top margin since there's no title
+        margin=dict(l=60, r=20, t=20, b=50),
         hovermode='x unified',
-        yaxis_title='Mortality Risk (0-1)',
-        showlegend=False
+        showlegend=False,
+        xaxis_title=None,
+        yaxis_title= 'Mortality'
     )
 
     # Update hover template
     fig.update_traces(
-        hovertemplate="<b>%{x}</b><br>Mortality Risk: %{y:.2f}<br><extra></extra>"
+        hovertemplate="<b>%{x}</b><br>Mortality Risk: %{y:.2f}<br><extra></extra>",
+
     )
 
     return fig
@@ -192,26 +194,6 @@ def generate_age_dist_figure(df_filtered):
         line_color="red",
         annotation_text=f"Average: {avg_age:.1f} years",
         annotation_position="top right"
-    )
-
-    # Highlight high-risk age groups (example: over 65)
-    high_risk_age = 65
-
-    # Add annotation for high-risk age groups
-    fig.add_annotation(
-        x=high_risk_age,
-        y=0.95,
-        yref="paper",
-        text="Higher risk age group",
-        showarrow=True,
-        arrowhead=1,
-        arrowcolor="red",
-        ax=0,
-        ay=-30,
-        font=dict(size=10, color="red"),
-        bordercolor="red",
-        borderwidth=1,
-        bgcolor="white"
     )
 
     fig.update_traces(
@@ -321,33 +303,16 @@ def generate_family_history_impact_figure(df_filtered):
 
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
-        yaxis_title="5-Year Survival Probability (0-1)",
-        xaxis_title="Family History of Lung Cancer",
-        showlegend=False,
-        title_font=dict(size=14)
+        title_font=dict(size=14),
+        showlegend = False,
+        xaxis_title = None,
+        yaxis_title = '5-yr Survival'
     )
 
     # Update hover template
     fig.update_traces(
         hovertemplate="<b>Family History: %{x}</b><br>5-Year Survival: %{y:.2f}<br><extra></extra>"
     )
-
-    # Add key insight
-    fig.add_annotation(
-        x=0.5,
-        y=1.05,
-        xref="paper",
-        yref="paper",
-        text="Early screening is crucial for those with family history",
-        showarrow=False,
-        font=dict(size=10, color="black"),
-        align="center",
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="red",
-        borderwidth=1,
-        borderpad=4
-    )
-
     return fig
 
 def generate_ses_figure(df_filtered):
@@ -397,11 +362,11 @@ def generate_ses_figure(df_filtered):
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
         bargap=0.1,
-        xaxis_title="Socioeconomic Status",  # Changed from "Income Level"
-        yaxis_title="Number of Patients",
         legend_title="Cancer Stage",
         title_font=dict(size=14),
-        showlegend=False  # Remove legend as requested
+        showlegend=False,
+        xaxis_title=None,
+        yaxis_title='5-Yr Survival'
     )
 
     # Removed the insight annotation as requested
@@ -435,15 +400,14 @@ def generate_treatment_acces_figure(df_filtered):
             "None": "#d62728",  # Red
             "Partial": "#ff7f0e",  # Orange
             "Full": "#2ca02c"  # Green
-        },
-        labels={
-            "Treatment_Access": "Access to Treatment",
-            "5_Year_Survival_Probability": "5-Year Survival Rate (0-1)"
-        },
+        }
     )
     fig.update_layout(
         margin=dict(l=50, r=20, t=50, b=40),
-        bargap=0.1
+        bargap=0.1,
+        showlegend = False,
+        xaxis_title = None,
+        yaxis_title = '5-Yr Survival'
     )
     return fig
 
@@ -468,7 +432,7 @@ def create_kpi_card(title, value, card_id, color="primary", className="text-cent
             [
                 dbc.CardHeader(title, className="text-center small fw-bold", style={'padding': '0.3rem 0.5rem'}),
                 dbc.CardBody(
-                    html.H4(value, className=f"card-title {className} my-1", id=card_id, style={'fontSize':'1.1rem'}),
+                    html.H1(value, className=f"card-title {className} my-1", id=card_id, style={'fontSize':'1.1rem'}),
                     style={'padding': '0.5rem'}
                 )
             ], className="shadow-sm h-100"
